@@ -1,0 +1,50 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# CMake
+/cmake-build-debug/
+/CMakeFiles/
+build
+
+# Visual Studio
+/.vs/
+/x64/
+/out/
+*.pdb
+*.ilk
+
+# Visual Studio Code
+.vscode
+
+# LLVM
+*.bc
+*.ll
+
+# macOS
+*.DS_Store
