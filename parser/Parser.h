@@ -9,29 +9,29 @@
 
 #include <string>
 #include "scanner/Scanner.h"
-#include "ast/Node.h"
+#include "util/datastructures/ast/Node.h"
 
-#include "ast/base_blocks/IdentNode.h"
-#include "ast/base_blocks/IntNode.h"
-#include "ast/base_blocks/SelectorNode.h"
+#include "util/datastructures/ast/base_blocks/IdentNode.h"
+#include "util/datastructures/ast/base_blocks/IntNode.h"
+#include "util/datastructures/ast/base_blocks/SelectorNode.h"
 
-#include "parser/ast/base_blocks/ExpressionNode.h"
+#include "util/datastructures/ast/base_blocks/ExpressionNode.h"
 
-#include "ast/declarations/DeclarationsNode.h"
-#include "ast/declarations/TypeNode.h"
-#include "ast/declarations/ProcedureDeclarationNode.h"
-#include "ast/declarations/ArrayTypeNode.h"
-#include "parser/ast/statements/ProcedureCallNode.h"
-#include "ast/declarations/RecordTypeNode.h"
+#include "util/datastructures/ast/declarations/DeclarationsNode.h"
+#include "util/datastructures/ast/declarations/TypeNode.h"
+#include "util/datastructures/ast/declarations/ProcedureDeclarationNode.h"
+#include "util/datastructures/ast/declarations/ArrayTypeNode.h"
+#include "util/datastructures/ast/statements/ProcedureCallNode.h"
+#include "util/datastructures/ast/declarations/RecordTypeNode.h"
 
-#include "ast/statements/StatementSequenceNode.h"
-#include "ast/statements/StatementNode.h"
-#include "ast/statements/WhileStatementNode.h"
-#include "ast/statements/AssignmentNode.h"
-#include "ast/statements/IfStatementNode.h"
-#include "ast/statements/RepeatStatementNode.h"
+#include "util/datastructures/ast/statements/StatementSequenceNode.h"
+#include "util/datastructures/ast/statements/StatementNode.h"
+#include "util/datastructures/ast/statements/WhileStatementNode.h"
+#include "util/datastructures/ast/statements/AssignmentNode.h"
+#include "util/datastructures/ast/statements/IfStatementNode.h"
+#include "util/datastructures/ast/statements/RepeatStatementNode.h"
 
-#include "ast/ModuleNode.h"
+#include "util/datastructures/ast/ModuleNode.h"
 
 using std::string;
 

@@ -5,13 +5,13 @@
 #ifndef OBERON0C_SEMANTICCHECKER_H
 #define OBERON0C_SEMANTICCHECKER_H
 
-#include "ScopeTable.h"
-#include "util/Logger.h"
-#include "parser/ast/NodeVisitor.h"
 #include <limits>
 #include <optional>
 #include <cmath>
 
+#include "util/datastructures/tables/ScopeTable.h"
+#include "util/Logger.h"
+#include "util/datastructures/ast/NodeVisitor.h"
 
 class SemanticChecker : NodeVisitor {
 

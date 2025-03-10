@@ -57,45 +57,44 @@ set(SCANNER_SOURCES
 
 set(PARSER_SOURCES
         parser/Parser.cpp parser/Parser.h
-        parser/ast/Node.cpp parser/ast/Node.h
-        parser/ast/NodeVisitor.cpp parser/ast/NodeVisitor.h
-        parser/ast/base_blocks/IdentNode.cpp parser/ast/base_blocks/IdentNode.h
-        parser/ast/base_blocks/IntNode.cpp parser/ast/base_blocks/IntNode.h
-        parser/ast/base_blocks/SelectorNode.cpp parser/ast/base_blocks/SelectorNode.h
-        parser/ast/base_blocks/ExpressionNode.cpp parser/ast/base_blocks/ExpressionNode.h
+        util/datastructures/ast/Node.cpp util/datastructures/ast/Node.h
+        util/datastructures/ast/NodeVisitor.cpp util/datastructures/ast/NodeVisitor.h
+        util/datastructures/ast/base_blocks/IdentNode.cpp util/datastructures/ast/base_blocks/IdentNode.h
+        util/datastructures/ast/base_blocks/IntNode.cpp util/datastructures/ast/base_blocks/IntNode.h
+        util/datastructures/ast/base_blocks/SelectorNode.cpp util/datastructures/ast/base_blocks/SelectorNode.h
+        util/datastructures/ast/base_blocks/ExpressionNode.cpp util/datastructures/ast/base_blocks/ExpressionNode.h
 
-        parser/ast/statements/StatementNode.cpp parser/ast/statements/StatementNode.h
-        parser/ast/statements/AssignmentNode.cpp parser/ast/statements/AssignmentNode.h
-        parser/ast/statements/ProcedureCallNode.cpp parser/ast/statements/ProcedureCallNode.h
-        parser/ast/statements/RepeatStatementNode.cpp parser/ast/statements/RepeatStatementNode.h
-        parser/ast/statements/WhileStatementNode.cpp parser/ast/statements/WhileStatementNode.h
-        parser/ast/statements/IfStatementNode.cpp parser/ast/statements/IfStatementNode.h
-        parser/ast/statements/StatementSequenceNode.cpp parser/ast/statements/StatementSequenceNode.h
+        util/datastructures/ast/statements/StatementNode.cpp util/datastructures/ast/statements/StatementNode.h
+        util/datastructures/ast/statements/AssignmentNode.cpp util/datastructures/ast/statements/AssignmentNode.h
+        util/datastructures/ast/statements/ProcedureCallNode.cpp util/datastructures/ast/statements/ProcedureCallNode.h
+        util/datastructures/ast/statements/RepeatStatementNode.cpp util/datastructures/ast/statements/RepeatStatementNode.h
+        util/datastructures/ast/statements/WhileStatementNode.cpp util/datastructures/ast/statements/WhileStatementNode.h
+        util/datastructures/ast/statements/IfStatementNode.cpp util/datastructures/ast/statements/IfStatementNode.h
+        util/datastructures/ast/statements/StatementSequenceNode.cpp util/datastructures/ast/statements/StatementSequenceNode.h
 
-        parser/ast/declarations/TypeNode.cpp parser/ast/declarations/TypeNode.h
-        parser/ast/declarations/ArrayTypeNode.cpp parser/ast/declarations/ArrayTypeNode.h
-        parser/ast/declarations/RecordTypeNode.cpp parser/ast/declarations/RecordTypeNode.h
-        parser/ast/declarations/ProcedureDeclarationNode.cpp parser/ast/declarations/ProcedureDeclarationNode.h
-        parser/ast/declarations/DeclarationsNode.cpp parser/ast/declarations/DeclarationsNode.h
+        util/datastructures/ast/declarations/TypeNode.cpp util/datastructures/ast/declarations/TypeNode.h
+        util/datastructures/ast/declarations/ArrayTypeNode.cpp util/datastructures/ast/declarations/ArrayTypeNode.h
+        util/datastructures/ast/declarations/RecordTypeNode.cpp util/datastructures/ast/declarations/RecordTypeNode.h
+        util/datastructures/ast/declarations/ProcedureDeclarationNode.cpp util/datastructures/ast/declarations/ProcedureDeclarationNode.h
+        util/datastructures/ast/declarations/DeclarationsNode.cpp util/datastructures/ast/declarations/DeclarationsNode.h
 
-        parser/ast/ModuleNode.cpp parser/ast/ModuleNode.h
+        util/datastructures/ast/ModuleNode.cpp util/datastructures/ast/ModuleNode.h
 
 )
 
 set(SEMANTIC_SOURCES
-        semantic_checker/SymbolTable.cpp semantic_checker/SymbolTable.h
+        util/datastructures/tables/SymbolTable.cpp util/datastructures/tables/SymbolTable.h
+        util/datastructures/tables/ScopeTable.cpp  util/datastructures/tables/ScopeTable.h
         semantic_checker/SemanticChecker.cpp semantic_checker/SemanticChecker.h
-        semantic_checker/ScopeTable.cpp
-        semantic_checker/ScopeTable.h
 )
 
 set(CODEGEN_SOURCES
         code_generator/CodeGenerator.cpp
         code_generator/CodeGenerator.h
-        code_generator/TypeInfoTable.cpp
-        code_generator/TypeInfoTable.h
-        code_generator/VariableTable.cpp
-        code_generator/VariableTable.h
+        util/datastructures/tables/TypeInfoTable.cpp
+        util/datastructures/tables/TypeInfoTable.h
+        util/datastructures/tables/VariableTable.cpp
+        util/datastructures/tables/VariableTable.h
 )
 
 set(ALL_SOURCES global.h ${UTIL_SOURCES} ${SCANNER_SOURCES} ${PARSER_SOURCES} ${SEMANTIC_SOURCES} ${CODEGEN_SOURCES}

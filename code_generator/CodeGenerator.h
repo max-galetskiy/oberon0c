@@ -5,6 +5,10 @@
 #ifndef OBERON0C_CODEGENERATOR_H
 #define OBERON0C_CODEGENERATOR_H
 
+#include <vector>
+#include <unordered_map>
+#include <utility>
+
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Type.h>
@@ -21,12 +25,10 @@
 #include <llvm/TargetParser/Host.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/raw_ostream.h>
-#include <vector>
-#include <unordered_map>
-#include <utility>
-#include "TypeInfoTable.h"
-#include "VariableTable.h"
-#include "parser/ast/NodeVisitor.h"
+
+#include "util/datastructures/tables/TypeInfoTable.h"
+#include "util/datastructures/tables/VariableTable.h"
+#include "util/datastructures/ast/NodeVisitor.h"
 
 enum class OutputFileType
 {
