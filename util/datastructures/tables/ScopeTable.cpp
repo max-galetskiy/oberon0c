@@ -41,13 +41,13 @@ IdentInfo *ScopeTable::lookup(const string &name, bool only_current)
     return nullptr;
 }
 
-void ScopeTable::insert(const string &name, Kind k, Node *node, GeneralType general_type, string type)
+void ScopeTable::insert(const std::string &name, Kind k, Node *node, std::shared_ptr<TypeInfo> type)
 {
     assert(current_scope >= 0);
-    scopes_[static_cast<size_t>(current_scope)]->insert(name, k, node, general_type, std::move(type));
+    scopes_[static_cast<size_t>(current_scope)]->insert(name, k, node, type);
 }
 
-TypeInfo* ScopeTable::lookup_field(const string &record_name, const string &field_name)
+std::shared_ptr<TypeInfo> ScopeTable::lookup_field(const string &record_name, const string &field_name)
 {
 
     for (int i = current_scope; i >= 0; i--)
@@ -63,7 +63,7 @@ TypeInfo* ScopeTable::lookup_field(const string &record_name, const string &fiel
     return nullptr;
 }
 
-std::optional<std::map<string, TypeInfo>> ScopeTable::lookup_record(const string &record_name) {
+std::optional<std::unordered_map<string, std::shared_ptr<TypeInfo>>> ScopeTable::lookup_record(const string &record_name) {
     for (int i = current_scope; i >= 0; i--)
     {
         auto rec = scopes_[static_cast<size_t>(i)]->lookup_record(record_name);
@@ -76,18 +76,31 @@ std::optional<std::map<string, TypeInfo>> ScopeTable::lookup_record(const string
     return std::nullopt;
 }
 
-void ScopeTable::insert_record(const string &record_name, std::vector<std::pair<string, TypeInfo>> fields)
-{
-    assert(current_scope >= 0);
-    scopes_[static_cast<size_t>(current_scope)]->insert_record(record_name, std::move(fields));
+std::shared_ptr<TypeInfo> ScopeTable::lookup_type(const string &name) {
+
+    for(int i = current_scope; i >= 0; i--){
+        auto type = scopes_[static_cast<size_t>(i)]->lookup_type(name);
+        if(type){
+            return type;
+        }
+    }
+
+    return nullptr;
 }
 
-void ScopeTable::insert_array_type(const string &name, Node *node, TypeInfo *element_type, int dimension) {
+std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, TypeTag tag) {
     assert(current_scope >= 0);
-    scopes_[static_cast<size_t>(current_scope)]->insert_array_type(name,node,element_type,dimension);
+    return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,tag);
 }
 
-void ScopeTable::insert(const string &name, Kind k, Node *node, TypeInfo type) {
+std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim) {
     assert(current_scope >= 0);
-    scopes_[static_cast<size_t>(current_scope)]->insert(name,k,node,std::move(type));
+    return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,std::move(elementType),dim);
 }
+
+std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::unordered_map<string, std::shared_ptr<TypeInfo>> fields) {
+    return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,std::move(fields));
+}
+
+
+

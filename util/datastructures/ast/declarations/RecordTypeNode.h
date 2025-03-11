@@ -26,7 +26,7 @@ class RecordTypeNode : public TypeNode
 private:
     std::vector<std::unique_ptr<field>> fields_;
     std::unordered_map<string, TypeNode *> field_typenodes_;
-    std::map<string, TypeInfo> field_types_actual_;
+    std::unordered_map<string, std::shared_ptr<TypeInfo>> field_typeinfos_;
 
 public:
     RecordTypeNode(FilePos pos, std::unique_ptr<field> first_field);
@@ -37,9 +37,9 @@ public:
     void print(std::ostream &stream) const override;
 
     std::vector<raw_field> get_fields();
-    std::map<string, TypeInfo> *get_field_types();
+    std::unordered_map<string, std::shared_ptr<TypeInfo>> *get_field_types();
 
-    void insert_field_types(std::map<string, TypeInfo> &field_types);
+    void insert_field_types(std::unordered_map<string, std::shared_ptr<TypeInfo>> &field_types);
 };
 
 #endif // OBERON0C_RECORDTYPENODE_H

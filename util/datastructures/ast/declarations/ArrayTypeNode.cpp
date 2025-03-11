@@ -11,16 +11,6 @@ void ArrayTypeNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void ArrayTypeNode::set_base_type_info(TypeInfo base_type_info)
-{
-    base_type_info_ = base_type_info;
-}
-
-TypeInfo ArrayTypeNode::get_base_type_info()
-{
-    return base_type_info_;
-}
-
 void ArrayTypeNode::print(ostream &stream) const
 {
     stream << "ARRAY " << *dim_ << " OF " << *type_;

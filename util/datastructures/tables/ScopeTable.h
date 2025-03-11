@@ -26,13 +26,17 @@ public:
     void endScope();
 
     IdentInfo *lookup(const string &name, bool only_current = false);
-    std::optional<std::map<string, TypeInfo>> lookup_record(const string &record_name);
-    TypeInfo *lookup_field(const string &record_name, const string &field_name);
+    std::optional<std::unordered_map<string, std::shared_ptr<TypeInfo>>> lookup_record(const string &record_name);
+    std::shared_ptr<TypeInfo> lookup_field(const string &record_name, const string &field_name);
+    std::shared_ptr<TypeInfo> lookup_type(const string& name);
 
-    void insert(const string &name, Kind k, Node *node, GeneralType general_type, string type = "");
-    void insert(const string &name, Kind k, Node *node, TypeInfo type);
-    void insert_array_type(const string &name, Node *node, TypeInfo *element_type, int dimension);
-    void insert_record(const string &record_name, std::vector<std::pair<string, TypeInfo>> fields);
+    void insert(const string &name, Kind k, Node *node, std::shared_ptr<TypeInfo> type);
+
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name, TypeTag tag);
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim);
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name,std::unordered_map<string, std::shared_ptr<TypeInfo>> fields);
+
 };
+
 
 #endif // OBERON0C_SCOPETABLE_H

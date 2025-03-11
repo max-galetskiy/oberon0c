@@ -26,8 +26,7 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/raw_ostream.h>
 
-#include "util/datastructures/tables/TypeInfoTable.h"
-#include "util/datastructures/tables/VariableTable.h"
+#include "util/datastructures/tables/TypeInfo.hpp.h"
 #include "util/datastructures/ast/NodeVisitor.h"
 
 enum class OutputFileType

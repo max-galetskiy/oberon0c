@@ -31,14 +31,14 @@ string IdentNode::get_value()
     return name_;
 }
 
-void IdentNode::set_types(TypeInfo formal, TypeInfo actual, TypeNode *node)
+void IdentNode::set_types(std::shared_ptr<TypeInfo> formal, std::shared_ptr<TypeInfo> actual, TypeNode *node)
 {
     formal_type_ = std::move(formal);
     actual_type_ = std::move(actual);
     type_node_ = node;
 }
 
-TypeInfo IdentNode::get_formal_type()
+std::shared_ptr<TypeInfo> IdentNode::get_formal_type()
 {
     return formal_type_;
 }
@@ -48,7 +48,7 @@ TypeNode *IdentNode::get_type_node()
     return type_node_;
 }
 
-TypeInfo IdentNode::get_actual_type()
+std::shared_ptr<TypeInfo> IdentNode::get_actual_type()
 {
     return actual_type_;
 }

@@ -3,6 +3,7 @@
 //
 
 #include "SemanticChecker.h"
+#include "util/panic.h"
 
 SemanticChecker::SemanticChecker(Logger &logger) : logger_(logger)
 {
@@ -14,11 +15,11 @@ SemanticChecker::SemanticChecker(Logger &logger) : logger_(logger)
 //      --> Expressions must be type-checked
 
 // Type Checking
-//      --> Arithmetic Operators must have INTEGER values and return INTEGERs
-//      --> Comparison Operators must have the same type and  return BOOLEANs
-//      --> Boolean Operators must have BOOLEAN values and return BOOLEANs
+//      --> Arithmetic Operators must have INTEGER values and return INTEGER
+//      --> Comparison Operators must have the same type and  return BOOLEAN
+//      --> Boolean Operators must have BOOLEAN values and return BOOLEAN
 // Type is returned as a string with special types denotes by an underscore (as Oberon0 does not allow underscores as the start of identifiers)
-TypeInfo SemanticChecker::checkType(ExpressionNode &expr)
+std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
 {
 
     auto type = expr.getNodeType();
@@ -40,15 +41,15 @@ TypeInfo SemanticChecker::checkType(ExpressionNode &expr)
             auto l_type = checkType(*lhs);
             auto r_type = checkType(*rhs);
 
-            if (trace_type(l_type).general == RECORD ||
-                trace_type(r_type).general == RECORD ||
-                trace_type(l_type).general == ARRAY ||
-                trace_type(r_type).general == ARRAY)
+            if (trace_type(l_type)->tag == RECORD ||
+                trace_type(r_type)->tag == RECORD ||
+                trace_type(l_type)->tag == ARRAY ||
+                trace_type(r_type)->tag == ARRAY)
             {
                 logger_.error(expr.pos(), "Illegal use of comparison operators with array/record types.");
                 return error_type;
             }
-            if (l_type.general != r_type.general || l_type.name != r_type.name)
+            if (l_type->tag != r_type->tag || l_type->name != r_type->name)
             {
                 logger_.error(expr.pos(), "LHS and RHS of Boolean expression do not have equal types.");
                 return error_type;
@@ -63,12 +64,12 @@ TypeInfo SemanticChecker::checkType(ExpressionNode &expr)
                  op == SourceOperator::MOD)
         {
 
-            if (trace_type(checkType(*lhs)).general != INTEGER)
+            if (trace_type(checkType(*lhs))->tag != INTEGER)
             {
                 logger_.error(expr.pos(), "LHS of arithmetic expression is not of type INTEGER.");
                 return error_type;
             }
-            if (trace_type(checkType(*rhs)).general != INTEGER)
+            if (trace_type(checkType(*rhs))->tag != INTEGER)
             {
                 logger_.error(expr.pos(), "RHS of arithmetic expression is not of type INTEGER.");
                 return error_type;
@@ -82,12 +83,12 @@ TypeInfo SemanticChecker::checkType(ExpressionNode &expr)
         else if (op == SourceOperator::AND || op == SourceOperator::OR)
         {
 
-            if (checkType(*lhs).general != BOOLEAN)
+            if (checkType(*lhs)->tag != BOOLEAN)
             {
                 logger_.error(expr.pos(), "LHS of Boolean expression is not of type BOOLEAN.");
                 return error_type;
             }
-            if (checkType(*rhs).general != BOOLEAN)
+            if (checkType(*rhs)->tag != BOOLEAN)
             {
                 logger_.error(expr.pos(), "RHS of Boolean expression is not of type BOOLEAN.");
                 return error_type;
@@ -107,7 +108,7 @@ TypeInfo SemanticChecker::checkType(ExpressionNode &expr)
 
         if (op == SourceOperator::NOT)
         {
-            if (checkType(*inner).general != BOOLEAN)
+            if (checkType(*inner)->tag != BOOLEAN)
             {
                 logger_.error(expr.pos(), "Cannot negate an expression that's not of type BOOLEAN.");
                 return error_type;
@@ -118,7 +119,7 @@ TypeInfo SemanticChecker::checkType(ExpressionNode &expr)
         }
         else if (op == SourceOperator::NEG)
         {
-            if (trace_type(checkType(*inner)).general != INTEGER)
+            if (trace_type(checkType(*inner))->tag != INTEGER)
             {
                 logger_.error(expr.pos(), "Expression is not of type INTEGER.");
                 return error_type;
@@ -282,7 +283,7 @@ std::optional<long> SemanticChecker::evaluate_expression(ExpressionNode &expr, b
 }
 
 // Type inference for an ident-selector expression
-TypeInfo SemanticChecker::check_selector_type(IdentSelectorExpressionNode &id_expr)
+std::shared_ptr<TypeInfo> SemanticChecker::check_selector_type(IdentSelectorExpressionNode &id_expr)
 {
     auto identifier = id_expr.get_identifier();
     auto selector = id_expr.get_selector();
@@ -308,18 +309,18 @@ TypeInfo SemanticChecker::check_selector_type(IdentSelectorExpressionNode &id_ex
 // TYPE INTARRAY = ARRAY 20 OF INTEGER
 // TYPE INA      = INTARRAY
 // TYPE ABC      = INA
-TypeInfo SemanticChecker::trace_type(TypeInfo initial_type)
+std::shared_ptr<TypeInfo> SemanticChecker::trace_type(std::shared_ptr<TypeInfo> initial_type)
 {
 
-    if (initial_type.general != ALIAS)
+    if (initial_type->tag != ALIAS)
     {
         return initial_type;
     }
 
-    TypeInfo current_type = initial_type;
+    auto current_type = initial_type;
     IdentInfo *curr_info;
 
-    while ((curr_info = scope_table_.lookup(initial_type.name)) && (current_type.general == ALIAS))
+    while ((curr_info = scope_table_.lookup(initial_type->name)) && (current_type->tag == ALIAS))
     {
 
         // Easy exit should this function be called with an erroneous type (which happens for semantically incorrect programs)
@@ -343,7 +344,7 @@ TypeInfo SemanticChecker::trace_type(TypeInfo initial_type)
 //      --> For Field-Selection:
 //                  * Object must actually have a record type
 //                  * Identifier must refer to an actual field of that record type
-TypeInfo SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &selector)
+std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &selector)
 {
     IdentInfo *prev_info = scope_table_.lookup(ident.get_value());
 
@@ -352,7 +353,13 @@ TypeInfo SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &s
         return prev_info->type;
     }
 
+    if(!prev_info){
+        logger_.error(ident.pos(),"Unknown identifier: " + ident.get_value());
+        return error_type;
+    }
+
     auto chain = selector.get_selector();
+    auto prev_type = prev_info->type;
 
     // Traverse entire chain
     // Note that the validity of the first selector cannot be checked inside this function
@@ -365,7 +372,7 @@ TypeInfo SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &s
             // Array Index
 
             // Object must be an array type
-            if (trace_type(prev_info->type).general != ARRAY)
+            if (trace_type(prev_type)->tag != ARRAY)
             {
                 logger_.error(selector.pos(), "Tried to index non-array object.");
                 return error_type;
@@ -373,14 +380,14 @@ TypeInfo SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &s
 
             // Index must evaluate to a non-negative integer
             auto expr = std::get<2>(*itr);
-            if (trace_type(checkType(*expr)).general != INTEGER)
+            if (trace_type(checkType(*expr))->tag != INTEGER)
             {
                 logger_.error(selector.pos(), "Array index does not evaluate to an integer.");
                 return error_type;
             }
 
-            TypeInfo arr_type = trace_type(prev_info->type);
-            int dim = arr_type.array_dim;
+            auto arr_type = trace_type(prev_type);
+            int dim = std::get<ArrayTypeInfo>(arr_type->extended_info.value()).size;
 
             // If the expression can be evaluated, array bounds need to be checked
             auto evaluated_dim = evaluate_expression(*expr, true);
@@ -394,20 +401,20 @@ TypeInfo SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &s
             }
 
             // Update prev_info
-            TypeInfo elem_type = *arr_type.element_type;
+            TypeInfo* elem_type = std::get<ArrayTypeInfo>(arr_type->extended_info.value()).elementType.get();
 
-            if (elem_type.general == INTEGER)
+            if (elem_type->tag == INTEGER)
             {
-                prev_info = scope_table_.lookup("INTEGER");
+                prev_type = scope_table_.lookup_type(int_string);
             }
-            else if (elem_type.general == ALIAS)
+            else if (elem_type->tag == ALIAS)
             {
-                prev_info = scope_table_.lookup(elem_type.name);
+                prev_type = scope_table_.lookup_type(elem_type->name);
             }
 
-            if (!prev_info)
+            if (!prev_type)
             {
-                logger_.error(selector.pos(), "Unable to get information for type '" + elem_type.name + "'");
+                logger_.error(selector.pos(), "Unable to get information for type '" + elem_type->name + "'");
                 return error_type;
             }
         }
@@ -417,87 +424,114 @@ TypeInfo SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &s
             // Record Field
 
             // Object must actually have a record type
-            if (trace_type(prev_info->type).general != RECORD)
+            if (trace_type(prev_type)->tag != RECORD)
             {
                 logger_.error(selector.pos(), "Tried to access field of a non-record object.");
                 return error_type;
             }
 
             // Identifier must refer to an actual field of that record type
-            string record_name = scope_table_.lookup(prev_info->type.name)->name;
-            TypeInfo *field_type = scope_table_.lookup_field(record_name, std::get<1>(*itr)->get_value());
-            if (!field_type || field_type->general == ERROR_TYPE)
+            string record_name = scope_table_.lookup(prev_info->type->name)->name;
+            auto field_type = scope_table_.lookup_field(record_name, std::get<1>(*itr)->get_value());
+            if (!field_type || field_type->tag == ERROR_TAG)
             {
                 logger_.error(selector.pos(), "Tried to access invalid field of record type '" + record_name + "' (Field: " + std::get<1>(*itr)->get_value() + ").");
                 return error_type;
             }
 
-            // Update prev_info
-            prev_info = scope_table_.lookup(field_type->name);
-
-            if (!prev_info)
-            {
-                logger_.error(selector.pos(), "Unable to get information for type '" + field_type->name + "'");
-                return error_type;
-            }
+            // Update prev_type
+            prev_type = field_type;
         }
     }
 
-    return prev_info->type;
+    return prev_type;
 }
 
-// Converts TypeNode to Type
-TypeInfo SemanticChecker::get_type(TypeNode &type, const string &alias = "")
-{
+// Verifies, creates and inserts new type into typetable
+std::shared_ptr<TypeInfo> SemanticChecker::create_new_type(TypeNode &type, const string &type_name, bool insert_into_table) {
 
-    if (type.getNodeType() == NodeType::ident)
-    {
-
+    // Identifier:
+    //      --> Must refer to a valid type
+    if(type.getNodeType() == NodeType::ident){
         auto ident_node = dynamic_cast<IdentNode &>(type);
-
         const string ident_name = ident_node.get_value();
 
-        if (ident_name == int_string)
-        {
-            ident_node.set_type_embedding(integer_type);
-            return integer_type;
-        }
-        else if (ident_name == bool_string)
-        {
-            ident_node.set_type_embedding(boolean_type);
-            return boolean_type;
-        }
-        else
-        {
-            ident_node.set_type_embedding({ALIAS, ident_name});
-            return {ALIAS, ident_name};
-        }
-    }
-    else if (type.getNodeType() == NodeType::array_type)
-    {
-        auto array_node = &dynamic_cast<ArrayTypeNode &>(type);
-        auto dim = evaluate_expression(*array_node->get_dim_node());
-
-        if (!dim)
-        {
+        if(insert_into_table && (ident_name == int_string || ident_name == bool_string)){
+            logger_.error(type.pos(), "Attempt to redefine predefined type '" + ident_name + "'.");
             return error_type;
         }
 
-        array_node->set_dim(dim.value());
+        if(!scope_table_.lookup_type(ident_name)){
+            if(!scope_table_.lookup(ident_name)){
+                logger_.error(type.pos(), "Use of unknown identifier: '" + ident_name + "'.");
+                return error_type;
+            }else{
+                logger_.error(type.pos(), "Identifier '" + ident_name + "' does not refer to a type.");
+                return error_type;
+            }
+        }
 
-        auto elem_type = get_type(*array_node->get_type_node());
-        array_node->set_base_type_info(elem_type);
-
-        return {ARRAY, alias.empty() ? "ARRAY" : alias, static_cast<int>(dim.value()), std::make_shared<TypeInfo>(elem_type)};
+        return (insert_into_table) ? scope_table_.insert_type(ident_name,ALIAS) : scope_table_.lookup_type(ident_name);
     }
-    else if (type.getNodeType() == NodeType::record_type)
-    {
-        return {RECORD, alias.empty() ? "RECORD" : alias};
+
+    // ArrayType:
+    //      --> Specified dimension must evaluate to an integer greater than zero
+    //      --> Specified type must exist (and be a type)
+    else if(type.getNodeType() == NodeType::array_type){
+        auto array_node = &dynamic_cast<ArrayTypeNode &>(type);
+        auto dim = evaluate_expression(*array_node->get_dim_node());
+
+        if(!dim.has_value()){
+            logger_.error(array_node->pos(), "Specified array dimensions do not evaluate to a constant.");
+            return error_type;
+        }
+        else if (dim.value() <= 0)
+        {
+            logger_.error(array_node->pos(), "Cannot create array of size " + to_string(dim.value()) + ".");
+        }
+        else
+        {
+            array_node->set_dim(dim.value());
+        }
+
+        auto elem_typenode = array_node->get_type_node();
+        auto elem_type = create_new_type(*elem_typenode,"",false);
+
+        return (insert_into_table)? scope_table_.insert_type(type_name, elem_type,dim.value()) : std::make_shared<TypeInfo>(type_name,ARRAY,ArrayTypeInfo(elem_type,dim.value()));
     }
 
-    std::cerr << "Invalid NodeType passed as TypeNode!" << std::endl;
-    return error_type;
+    // RecordType:
+    //      --> RecordType definition opens a new scope
+    //      --> All field names must be unique
+    //      --> Types of the fields must be valid
+    else if(type.getNodeType() == NodeType::record_type){
+        auto record_node = &dynamic_cast<RecordTypeNode&>(type);
+        auto field_map = key_value_map(*record_node);               // Note: This function also handles some recordType errors
+
+        // Insert record type into table
+        auto record_type = (insert_into_table)? scope_table_.insert_type(type_name,field_map) : std::make_shared<TypeInfo>(type_name,RECORD,RecordTypeInfo(field_map));
+
+        // Insert Traced Record Types into RecordTypeNode
+        auto field_map_opt = scope_table_.lookup_record(type_name);
+        if (field_map_opt)
+        {
+            auto fields = field_map_opt.value();
+
+            // Trace Types
+            for (auto fitr = field_map.begin(); fitr != field_map.end(); fitr++)
+            {
+                fitr->second = trace_type(fitr->second);
+            }
+
+            record_node->insert_field_types(fields);
+        }
+
+        return record_type;
+    }
+
+    panic("Invalid NodeType passed as TypeNode!");
 }
+
 
 // Module:
 //      --> The beginning and ending names should align
@@ -508,8 +542,8 @@ void SemanticChecker::visit(ModuleNode &module)
     scope_table_.beginScope();
 
     // Insert pre-defined types "INTEGER" and "BOOLEAN"
-    scope_table_.insert("INTEGER", Kind::TYPENAME, nullptr, integer_type);
-    scope_table_.insert("BOOLEAN", Kind::TYPENAME, nullptr, boolean_type);
+    scope_table_.insert_type(int_string,INTEGER);
+    scope_table_.insert_type(bool_string,BOOLEAN);
 
     auto names = module.get_name();
 
@@ -546,7 +580,7 @@ void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
     }
 
     // Save the procedure name (before opening up a new scope!)
-    scope_table_.insert(names.first->get_value(), Kind::PROCEDURE, &procedure, ERROR_TYPE);
+    scope_table_.insert(names.first->get_value(), Kind::PROCEDURE, &procedure, error_type);
 
     // Open up new scope
     scope_table_.beginScope();
@@ -561,18 +595,17 @@ void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
 
             // Check Type definition
             TypeNode *type = std::get<2>(**itr).get();
-            TypeInfo var_type;
+            std::shared_ptr<TypeInfo> var_type = nullptr;
             if (type->getNodeType() == NodeType::array_type || type->getNodeType() == NodeType::record_type)
             {
-                var_type = get_type(*type);
                 logger_.error(type->pos(), "New Type defined in formal parameters of function. Actual Parameter will never be able to fulfill this type (Note: The Oberon0 compiler follows name-equivalence, not structural equivalence).");
             }
             else
             {
 
                 // Corresponding Type has to be looked up
-                auto type_info = scope_table_.lookup(dynamic_cast<IdentNode *>(type)->get_value());
-                var_type = (type_info) ? type_info->type : error_type;
+                auto type_info = scope_table_.lookup_type(dynamic_cast<IdentNode *>(type)->get_value());
+                var_type = (type_info) ? type_info : error_type;
             }
             visit(*type);
 
@@ -636,7 +669,7 @@ void SemanticChecker::visit(DeclarationsNode &declars)
         // insert variable into scope table
         auto const_type = checkType(*itr->second);
         itr->first->set_types(const_type, trace_type(const_type), nullptr);
-        scope_table_.insert(itr->first->get_value(), Kind::CONSTANT, itr->second, const_type.general, const_type.name);
+        scope_table_.insert(itr->first->get_value(), Kind::CONSTANT, itr->second, const_type);
     }
 
     // Typenames
@@ -650,34 +683,8 @@ void SemanticChecker::visit(DeclarationsNode &declars)
             logger_.error(declars.pos(), "Multiple Declarations of identifier '" + itr->first->get_value() + "'.");
         }
 
-        // check the type definition
-        visit(*itr->second);
-
-        // insert into scope table
-        auto type_def = get_type(*itr->second, itr->first->get_value());
-        itr->first->set_types(type_def, trace_type(type_def), itr->second);
-        scope_table_.insert(itr->first->get_value(), Kind::TYPENAME, itr->second, type_def);
-
-        // if the type referred to a record-type, then we also store the record information in the scope table
-        if (itr->second->getNodeType() == NodeType::record_type)
-        {
-            scope_table_.insert_record(itr->first->get_value(), key_value_map(dynamic_cast<RecordTypeNode &>(*itr->second)));
-
-            // Insert Traced Record Types into RecordTypeNode
-            auto field_map_opt = scope_table_.lookup_record(itr->first->get_value());
-            if (field_map_opt)
-            {
-                auto field_map = field_map_opt.value();
-
-                // Trace Types
-                for (auto fitr = field_map.begin(); fitr != field_map.end(); fitr++)
-                {
-                    fitr->second = trace_type(fitr->second);
-                }
-
-                dynamic_cast<RecordTypeNode &>(*itr->second).insert_field_types(field_map);
-            }
-        }
+        // check the type definition and insert into scope table
+        create_new_type(*itr->second, itr->first->get_value(),true);
     }
 
     // Variables:
@@ -688,26 +695,17 @@ void SemanticChecker::visit(DeclarationsNode &declars)
         // check for valid types (i.e., visit Type Node)
         visit(*itr->second);
 
-        TypeInfo var_type;
-        TypeNode *var_typenode = nullptr;
+        std::shared_ptr<TypeInfo> var_type;
 
-        // Assign type (if right hand side is a variable, then the corresponding type info has to be looked up
+        // Assign type (if right hand side is an identifier, then the corresponding type info has to be looked up
         // Correctly Assign TypeNode
         if (itr->second->getNodeType() == NodeType::ident)
         {
-            auto type_info = scope_table_.lookup(dynamic_cast<IdentNode *>(itr->second)->get_value());
-            var_type = (type_info) ? type_info->type : error_type;
-
-            if (type_info && type_info->kind == Kind::TYPENAME)
-            {
-                auto traced_type_info = scope_table_.lookup(trace_type(var_type).name);
-                var_typenode = (traced_type_info) ? dynamic_cast<TypeNode *>(traced_type_info->node) : nullptr;
-            }
+            var_type = scope_table_.lookup_type(dynamic_cast<IdentNode *>(itr->second)->get_value());
         }
         else
         {
-            var_type = get_type(*itr->second);
-            var_typenode = itr->second;
+            var_type = create_new_type(*itr->second,"", false);
         }
 
         for (auto el = itr->first.begin(); el != itr->first.end(); el++)
@@ -720,7 +718,7 @@ void SemanticChecker::visit(DeclarationsNode &declars)
             }
 
             // insert variable into symbol table
-            (*el)->set_types(var_type, trace_type(var_type), var_typenode);
+            (*el)->set_types(var_type, trace_type(var_type), itr->second);
             scope_table_.insert((*el)->get_value(), Kind::VARIABLE, itr->second, var_type);
         }
     }
@@ -732,86 +730,22 @@ void SemanticChecker::visit(DeclarationsNode &declars)
     }
 }
 
-// Type: (Recall that Type is an abstract class)
-void SemanticChecker::visit(TypeNode &node)
+// Fills a key-value-map-vector which is needed to place record types into the scope table
+std::unordered_map<string,std::shared_ptr<TypeInfo>> SemanticChecker::key_value_map(RecordTypeNode &node)
 {
-    if (node.getNodeType() == NodeType::ident)
-    {
-        visit(dynamic_cast<IdentNode &>(node));
-    }
-    else if (node.getNodeType() == NodeType::array_type)
-    {
-        visit(dynamic_cast<ArrayTypeNode &>(node));
-    }
-    else if (node.getNodeType() == NodeType::record_type)
-    {
-        visit(dynamic_cast<RecordTypeNode &>(node));
-    }
-}
-
-// Identifier:
-//      --> Must refer to a valid type (Note that this visit method is only called on typenames)
-void SemanticChecker::visit(IdentNode &node)
-{
-    auto info = scope_table_.lookup(node.get_value());
-    if (!info)
-    {
-        logger_.error(node.pos(), "Use of unknown identifier: '" + node.get_value() + "'.");
-        return;
-    }
-
-    if (info->kind != Kind::TYPENAME)
-    {
-        logger_.error(node.pos(), "Identifier '" + node.get_value() + "' does not refer to a type.");
-    }
-}
-
-// ArrayType:
-//      --> Specified dimension must evaluate to an integer greater than zero
-//      --> Specified type must exist (and be a type)
-void SemanticChecker::visit(ArrayTypeNode &node)
-{
-
-    auto dim_expr = node.get_dim_node();
-    auto dim = evaluate_expression(*dim_expr);
-
-    // Check dimensions
-    if (!dim.has_value())
-    {
-        logger_.error(dim_expr->pos(), "Specified array dimensions do not evaluate to a constant.");
-    }
-    else if (dim.value() <= 0)
-    {
-        logger_.error(dim_expr->pos(), "Cannot create array of size " + to_string(dim.value()) + ".");
-    }
-    else
-    {
-        node.set_dim(dim.value());
-    }
-
-    // Check type
-    auto type = node.get_type_node();
-    visit(*type);
-}
-
-// RecordType:
-//      --> RecordType definition opens a new scope
-//      --> All field names must be unique
-//      --> Types of the fields must be valid
-//      --> RecordType is inserted correctly in ScopeTable
-void SemanticChecker::visit(RecordTypeNode &node)
-{
-
     scope_table_.beginScope();
+    std::unordered_map<string,std::shared_ptr<TypeInfo>> key_value_map;
 
     auto fields = node.get_fields();
-
     for (auto field_itr = fields.begin(); field_itr != fields.end(); field_itr++)
     {
 
-        // Check for double names
+        // Check for valid type definition
+        auto field_type = create_new_type(*field_itr->second,"", false);
+
         for (auto field_name = field_itr->first.begin(); field_name != field_itr->first.end(); field_name++)
         {
+            // Check for double names
             if (scope_table_.lookup(*field_name, true))
             {
                 logger_.error(node.pos(), "Multiple definitions of record field '" + *field_name + "'.");
@@ -820,29 +754,12 @@ void SemanticChecker::visit(RecordTypeNode &node)
             // Note: Since this scope is only used to check for double definitions and immediately closed after that,
             //       It doesn't *really* matter what we put into the scope table for the fields
             scope_table_.insert(*field_name, Kind::VARIABLE, nullptr, error_type);
-        }
 
-        // Check for valid type definition
-        visit(*field_itr->second);
+            key_value_map[*field_name] = field_type;
+        }
     }
 
     scope_table_.endScope();
-}
-
-// Fills a key-value-map-vector which is needed to place record types into the scope table
-std::vector<std::pair<string, TypeInfo>> SemanticChecker::key_value_map(RecordTypeNode &node)
-{
-    std::vector<std::pair<string, TypeInfo>> key_value_map;
-
-    auto fields = node.get_fields();
-    for (auto field_itr = fields.begin(); field_itr != fields.end(); field_itr++)
-    {
-        for (auto field_name = field_itr->first.begin(); field_name != field_itr->first.end(); field_name++)
-        {
-            key_value_map.emplace_back(*field_name, get_type(*field_itr->second));
-        }
-    }
-
     return key_value_map;
 }
 
@@ -915,7 +832,7 @@ void SemanticChecker::visit(AssignmentNode &node)
     if (node.get_selector())
     {
         lhs_type = check_selector_chain(*node.get_variable(), *node.get_selector());
-        if (lhs_type.general == ERROR_TYPE)
+        if (lhs_type->tag == ERROR_TAG)
         {
             return;
         }
@@ -925,9 +842,9 @@ void SemanticChecker::visit(AssignmentNode &node)
     auto rhs = node.get_expr();
     auto expr_type = checkType(*rhs);
 
-    if ((expr_type != lhs_type) && expr_type.general != ERROR_TYPE)
+    if ((*expr_type != *lhs_type) && expr_type->tag != ERROR_TAG)
     { // We exclude the error case to avoid too many exceptions
-        logger_.error(node.pos(), "Cannot assign something of type '" + expr_type.name + "' to a variable of type '" + lhs_type.name + "'.");
+        logger_.error(node.pos(), "Cannot assign something of type '" + expr_type->name + "' to a variable of type '" + lhs_type->name + "'.");
         return;
     }
 
@@ -942,7 +859,7 @@ void SemanticChecker::visit(IfStatementNode &node)
 
     // Initial If-Then
     auto condition = node.get_condition();
-    if (checkType(*condition).general != BOOLEAN)
+    if (checkType(*condition)->tag != BOOLEAN)
     {
         logger_.error(condition->pos(), "Condition of If-Statement does not evaluate to a BOOLEAN.");
     }
@@ -953,7 +870,7 @@ void SemanticChecker::visit(IfStatementNode &node)
     for (auto itr = else_ifs->begin(); itr != else_ifs->end(); itr++)
     {
 
-        if (checkType(*itr->first).general != BOOLEAN)
+        if (checkType(*itr->first)->tag != BOOLEAN)
         {
             logger_.error(itr->first->pos(), "Condition of Else-If-Statement does not evaluate to a BOOLEAN.");
         }
@@ -975,7 +892,7 @@ void SemanticChecker::visit(RepeatStatementNode &node)
 {
 
     auto condition = node.get_expr();
-    if (checkType(*condition).general != BOOLEAN)
+    if (checkType(*condition)->tag != BOOLEAN)
     {
         logger_.error(node.pos(), "Condition of Repeat-Statement does not evaluate to the type BOOLEAN.");
     }
@@ -990,7 +907,7 @@ void SemanticChecker::visit(RepeatStatementNode &node)
 void SemanticChecker::visit(WhileStatementNode &node)
 {
     auto condition = node.get_expr();
-    if (checkType(*condition).general != BOOLEAN)
+    if (checkType(*condition)->tag != BOOLEAN)
     {
         logger_.error(node.pos(), "Condition of While-Loop does not evaluate to the type BOOLEAN.");
     }
@@ -1069,21 +986,21 @@ void SemanticChecker::visit(ProcedureCallNode &node)
         for (auto fp_section_itr = formal_parameters->begin(); fp_section_itr != formal_parameters->end(); fp_section_itr++)
         {
 
-            auto curr_type = get_type(*std::get<2>(**fp_section_itr).get());
+            auto curr_type = create_new_type(*std::get<2>(**fp_section_itr).get(),"",false);
 
             for (auto formal_param = std::get<1>(**fp_section_itr)->begin(); formal_param != std::get<1>(**fp_section_itr)->end(); formal_param++)
             {
 
-                if (curr_type.general == RECORD && curr_type.name == "RECORD")
+                if (curr_type->tag == RECORD && curr_type->name == "RECORD")
                 {
                     logger_.error(node.pos(), "Cannot correctly check type of given parameter for procedure '" + ident->get_value() + "' since record types can be compared by name only.");
                 }
                 else
                 {
-                    TypeInfo act_param_type = checkType(**act_param_itr);
-                    if (act_param_type != curr_type)
+                    auto act_param_type = checkType(**act_param_itr);
+                    if (*act_param_type != *curr_type)
                     {
-                        logger_.error(node.pos(), "Type of actual parameter does not match type of formal parameter (expected '" + curr_type.name + "', got '" + act_param_type.name + "').");
+                        logger_.error(node.pos(), "Type of actual parameter does not match type of formal parameter (expected '" + curr_type->name + "', got '" + act_param_type->name + "').");
                     }
                 }
 
@@ -1109,8 +1026,14 @@ void SemanticChecker::visit(UnaryExpressionNode &node) { (void)node; }
 void SemanticChecker::visit(BinaryExpressionNode &node) { (void)node; }
 void SemanticChecker::visit(IdentSelectorExpressionNode &node) { (void)node; }
 void SemanticChecker::visit(SelectorNode &node) { (void)node; }
+void SemanticChecker::visit(TypeNode &node){(void)node;}
+void SemanticChecker::visit(IdentNode &node){(void)node;}
+void SemanticChecker::visit(ArrayTypeNode &node){(void)node;}
+void SemanticChecker::visit(RecordTypeNode &node){(void)node;}
 
 void SemanticChecker::validate_program(ModuleNode &node)
 {
     visit(node);
 }
+
+

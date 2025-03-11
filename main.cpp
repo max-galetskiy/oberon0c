@@ -9,7 +9,7 @@
 #include "scanner/Scanner.h"
 #include "parser/Parser.h"
 #include "semantic_checker/SemanticChecker.h"
-#include "code_generator/CodeGenerator.h"
+//#include "code_generator/CodeGenerator.h"
 
 using std::cerr;
 using std::cout;
@@ -27,7 +27,7 @@ int main(const int argc, const char *argv[]) {
     string filename = argv[1];
     Logger logger;
 
-    OutputFileType output_type;
+    /*OutputFileType output_type;
     if(argc > 2){
         auto flag = string(argv[2]);
         if(flag == "-o" || flag == "-O"){
@@ -46,7 +46,7 @@ int main(const int argc, const char *argv[]) {
     }
     else{
         output_type = OutputFileType::LLVMIRFile;
-    }
+    }*/
 
     if(argc > 3){
         if(string(argv[3]) == "--debug"){
@@ -85,8 +85,8 @@ int main(const int argc, const char *argv[]) {
             logger.info("Semantic checking successful. Starting code generation...");
 
             // Code Generation
-            CodeGenerator code_gen(filename,output_type);
-            code_gen.generate_code(*ast);
+            //CodeGenerator code_gen(filename,output_type);
+            //code_gen.generate_code(*ast);
 
             logger.info("Code generation successful.");
 

@@ -46,6 +46,8 @@ include_directories(BEFORE .)
 set(UTIL_SOURCES
         util/Logger.cpp util/Logger.h
         util/panic.cpp util/panic.h
+        util/datastructures/tables/TypeInfo.cpp
+        util/datastructures/tables/TypeInfo.hpp
 )
 
 set(SCANNER_SOURCES
@@ -89,12 +91,10 @@ set(SEMANTIC_SOURCES
 )
 
 set(CODEGEN_SOURCES
-        code_generator/CodeGenerator.cpp
-        code_generator/CodeGenerator.h
-        util/datastructures/tables/TypeInfoTable.cpp
-        util/datastructures/tables/TypeInfoTable.h
-        util/datastructures/tables/VariableTable.cpp
-        util/datastructures/tables/VariableTable.h
+        #code_generator/CodeGenerator.cpp
+        #code_generator/CodeGenerator.h
+        #util/datastructures/tables/VariableTable.cpp
+        #util/datastructures/tables/VariableTable.h
 )
 
 set(ALL_SOURCES global.h ${UTIL_SOURCES} ${SCANNER_SOURCES} ${PARSER_SOURCES} ${SEMANTIC_SOURCES} ${CODEGEN_SOURCES}

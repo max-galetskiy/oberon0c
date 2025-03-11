@@ -11,8 +11,11 @@
 #include <unordered_map>
 #include <map>
 #include <optional>
-#include "util/datastructures/ast/Node.h"
 
+#include "util/datastructures/ast/Node.h"
+#include "util/datastructures/tables/TypeInfo.hpp"
+
+// records the "kind" of an identifier, i.e. whether the identifier refers to a variable, a constant, a type or a procedure
 enum Kind
 {
     PROCEDURE,
@@ -20,26 +23,6 @@ enum Kind
     VARIABLE,
     TYPENAME,
     ERROR_KIND
-};
-
-enum GeneralType
-{
-    INTEGER,
-    BOOLEAN,
-    ERROR_TYPE,
-    RECORD,
-    ARRAY,
-    ALIAS
-};
-
-struct TypeInfo
-{
-    GeneralType general;
-    string name;
-    int array_dim = -1;
-    std::shared_ptr<TypeInfo> element_type = nullptr;
-    bool operator!=(TypeInfo other);
-    bool operator==(TypeInfo other);
 };
 
 /*
@@ -52,39 +35,36 @@ struct TypeInfo
  *              Variable    |   TypeNode
  *              Typename    |   TypeNode
  *
- *   --> Type = Type of this variable as a string (empty for procedures)
- *
- *   A note on types:
- *         * Prebuilt types are "INTEGER", "BOOLEAN" and "_ERROR"
- *         * Array-Types are stored as "_ARRAY_[TYPE]_[DIMENSION]"
- *         * Record-Types are simply stored as "_RECORD"
+ *   --> Type = Type of this variable (nullptr for procedures)
  */
 struct IdentInfo
 {
     string name; // Useful since sometimes the name of the identifier may be "lost" along the way, e.g. when tracing
     Kind kind;
     Node *node;
-    TypeInfo type;
+    std::shared_ptr<TypeInfo> type;
 };
 
 class SymbolTable
 {
 
 private:
-    std::unordered_map<string, IdentInfo> table_;
-    std::unordered_map<string, std::map<string, TypeInfo>> records_;
+    std::unordered_map<string, IdentInfo> identifiers_;
+    std::unordered_map<string, std::shared_ptr<TypeInfo>> types_;
 
 public:
     explicit SymbolTable() = default;
 
-    void insert(const string &name, Kind k, Node *node, GeneralType general_type, string type = "");
-    void insert(const string &name, Kind k, Node *node, const TypeInfo &type);
-    void insert_array_type(const string &name, Node *node, TypeInfo *element_type, int dimension);
-    void insert_record(const string &record_name, std::vector<std::pair<string, TypeInfo>> fields);
+    void insert(const string &name, Kind k, Node *node, std::shared_ptr<TypeInfo> type);
+
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name, TypeTag tag);
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim);
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name,std::unordered_map<string, std::shared_ptr<TypeInfo>> fields);
 
     IdentInfo *lookup(const std::string &name);
-    TypeInfo *lookup_field(const string &record_name, const string &field_name);
-    std::optional<std::map<string, TypeInfo>> lookup_record(const string &record_name);
+    std::shared_ptr<TypeInfo> lookup_field(const string &record_name, const string &field_name);
+    std::shared_ptr<TypeInfo> lookup_type(const string& name);
+    std::optional<std::unordered_map<string, std::shared_ptr<TypeInfo>>> lookup_record(const string &record_name);
 };
 
 #endif // OBERON0C_SYMBOLTABLE_H

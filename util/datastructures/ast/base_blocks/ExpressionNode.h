@@ -22,8 +22,8 @@ class ExpressionNode : public Node{
     protected:
         int precedence_ = -1;
         std::optional<long> value_ = std::nullopt;
-        TypeInfo formal_type;
-        TypeInfo actual_type;
+        std::shared_ptr<TypeInfo> formal_type;
+        std::shared_ptr<TypeInfo> actual_type;
         TypeNode* type_node = nullptr;
 
     public:
@@ -35,9 +35,9 @@ class ExpressionNode : public Node{
         void set_value(long value);
         std::optional<long>get_value();
 
-        void set_types(TypeInfo formal, TypeInfo actual, TypeNode* node);
-        TypeInfo get_formal_type();
-        TypeInfo get_actual_type();
+        void set_types(std::shared_ptr<TypeInfo> formal, std::shared_ptr<TypeInfo> actual, TypeNode* node);
+        std::shared_ptr<TypeInfo> get_formal_type();
+        std::shared_ptr<TypeInfo> get_actual_type();
         TypeNode* get_type_node();
 
         static SourceOperator token_to_op(TokenType);
