@@ -58,6 +58,7 @@ public:
     void insert(const string &name, Kind k, Node *node, std::shared_ptr<TypeInfo> type);
 
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, TypeTag tag);
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name, const string &aliased_type);
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim);
     std::shared_ptr<TypeInfo> insert_type(const string &type_name,std::unordered_map<string, std::shared_ptr<TypeInfo>> fields);
 

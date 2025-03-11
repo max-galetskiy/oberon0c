@@ -93,6 +93,11 @@ std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, TypeT
     return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,tag);
 }
 
+std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, const string &aliased_type) {
+    assert(current_scope >= 0);
+    return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,aliased_type);
+}
+
 std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim) {
     assert(current_scope >= 0);
     return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,std::move(elementType),dim);

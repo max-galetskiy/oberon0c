@@ -25,9 +25,12 @@ enum TypeTag
 
 struct TypeInfo;
 
+struct AliasTypeInfo{
+    std::string aliased_type;
+};
+
 struct RecordTypeInfo{
     std::unordered_map<std::string, std::shared_ptr<TypeInfo>> fields;
-
     RecordTypeInfo(std::unordered_map<std::string, std::shared_ptr<TypeInfo>>& fields) : fields(fields){};
 };
 
@@ -36,7 +39,7 @@ struct ArrayTypeInfo{
     int size;
 };
 
-typedef std::variant<RecordTypeInfo,ArrayTypeInfo> ext_info;
+typedef std::variant<RecordTypeInfo,ArrayTypeInfo,AliasTypeInfo> ext_info;
 
 // encapsulates all necessary info on the type of an identifier
 struct TypeInfo {

@@ -312,7 +312,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_type(IdentSelectorExpr
 std::shared_ptr<TypeInfo> SemanticChecker::trace_type(std::shared_ptr<TypeInfo> initial_type)
 {
 
-    if (initial_type->tag != ALIAS)
+    if (!initial_type || initial_type->tag != ALIAS)
     {
         return initial_type;
     }
@@ -431,11 +431,10 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident
             }
 
             // Identifier must refer to an actual field of that record type
-            string record_name = scope_table_.lookup(prev_info->type->name)->name;
-            auto field_type = scope_table_.lookup_field(record_name, std::get<1>(*itr)->get_value());
+            auto field_type = scope_table_.lookup_field(prev_type->name, std::get<1>(*itr)->get_value());
             if (!field_type || field_type->tag == ERROR_TAG)
             {
-                logger_.error(selector.pos(), "Tried to access invalid field of record type '" + record_name + "' (Field: " + std::get<1>(*itr)->get_value() + ").");
+                logger_.error(selector.pos(), "Tried to access invalid field of record type '" + prev_type->name + "' (Field: " + std::get<1>(*itr)->get_value() + ").");
                 return error_type;
             }
 
@@ -456,11 +455,6 @@ std::shared_ptr<TypeInfo> SemanticChecker::create_new_type(TypeNode &type, const
         auto ident_node = dynamic_cast<IdentNode &>(type);
         const string ident_name = ident_node.get_value();
 
-        if(insert_into_table && (ident_name == int_string || ident_name == bool_string)){
-            logger_.error(type.pos(), "Attempt to redefine predefined type '" + ident_name + "'.");
-            return error_type;
-        }
-
         if(!scope_table_.lookup_type(ident_name)){
             if(!scope_table_.lookup(ident_name)){
                 logger_.error(type.pos(), "Use of unknown identifier: '" + ident_name + "'.");
@@ -471,7 +465,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::create_new_type(TypeNode &type, const
             }
         }
 
-        return (insert_into_table) ? scope_table_.insert_type(ident_name,ALIAS) : scope_table_.lookup_type(ident_name);
+        return (insert_into_table) ? scope_table_.insert_type(type_name,ident_name) : scope_table_.lookup_type(ident_name);
     }
 
     // ArrayType:
@@ -680,7 +674,12 @@ void SemanticChecker::visit(DeclarationsNode &declars)
         // check for double declarations
         if (scope_table_.lookup(itr->first->get_value(), true))
         {
-            logger_.error(declars.pos(), "Multiple Declarations of identifier '" + itr->first->get_value() + "'.");
+            if(itr->first->get_value() == int_string || itr->first->get_value() == bool_string){
+                logger_.error(declars.pos(), "Attempt to redefine predefined type '" + itr->first->get_value() + "'.");
+            }else{
+                logger_.error(declars.pos(), "Multiple Declarations of identifier '" + itr->first->get_value() + "'.");
+            }
+
         }
 
         // check the type definition and insert into scope table
@@ -811,7 +810,7 @@ void SemanticChecker::visit(AssignmentNode &node)
 
     if (!lhs_id_info)
     {
-        logger_.error(node.pos(), "Use on unknown identifier: '" + lhs_id + "'.");
+        logger_.error(node.pos(), "Use of unknown identifier: '" + lhs_id + "'.");
         return;
     }
 

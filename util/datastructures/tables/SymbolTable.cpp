@@ -67,6 +67,12 @@ std::shared_ptr<TypeInfo> SymbolTable::insert_type(const string &type_name, Type
     return types_[type_name];
 }
 
+// Overload for aliases
+std::shared_ptr<TypeInfo> SymbolTable::insert_type(const string &type_name, const string &aliased_type) {
+    types_[type_name] = std::make_shared<TypeInfo>(type_name,ALIAS,AliasTypeInfo(aliased_type));
+    return types_[type_name];
+}
+
 // Overload for ArrayTypes
 std::shared_ptr<TypeInfo> SymbolTable::insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim) {
     types_[type_name] = std::make_shared<TypeInfo>(type_name,ARRAY,ArrayTypeInfo(std::move(elementType),dim));
