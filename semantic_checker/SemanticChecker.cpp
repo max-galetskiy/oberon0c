@@ -298,11 +298,14 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_type(IdentSelectorExpr
 
     if (!selector || !selector->get_selector())
     {
+        id_expr.set_types(identifier_info->type, trace_type(identifier_info->type), nullptr);
         return identifier_info->type;
     }
 
     // Check the selector chain for validity (visit the selector)
-    return check_selector_chain(*identifier, *selector);
+    auto type = check_selector_chain(*identifier, *selector);
+    id_expr.set_types(type, trace_type(type), nullptr);
+    return type;
 }
 
 // Traces back types to handle type-aliases like the following:
