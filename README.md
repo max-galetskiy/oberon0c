@@ -8,7 +8,10 @@ This project implements a compiler for Oberon-0, a relative rudementary subset o
 The compiler was originally built as part of the M.Sc. course "Compiler Construction" under [Michael Grossniklaus](https://dbis.uni-konstanz.de/people/people/grossniklaus/) at the [University of Constance](https://www.uni-konstanz.de/en/) together with fellow student [Elias Maier](https://github.com/eelias13). Technically, it's only a compiler-frontend which transforms high-level Oberon-0 source code into the low-level, assembly-like [LLVM-Intermediate-Representation](https://llvm.org/) (which has the added convenience that compiled programs can be easily linked and executed using [clang](https://clang.llvm.org/)). In uploading and continuing my work on this project, I aim at demonstrating the development of compilers from a learning-based perspective. If you are (for whatever reason :p) looking for a more extensive compiler, refer to [Michael Grossniklaus' pet project](https://github.com/zaskar9/oberon-lang).
 
 ## Dependencies
-tba
+This code depends on [LLVM](https://llvm.org/) and the following [Boost](https://www.boost.org/) libraries: `system`,`convert`,`filesystem`, `program_options`. Both have to be installed on a host-machine to build the compiler. Ideally, a package manager can be used. For example,
+ * [vcpkg]() for Windows (Note that the LLVM download will be **quite** large. Maybe you might want to refer to the official [LLVM website's instructions](https://releases.llvm.org/download.html))
+ * [Homebrew](https://brew.sh/) for MacOS
+ * [APT](https://wiki.debian.org/Apt) for Linux
 
 ## How to build
 tba
