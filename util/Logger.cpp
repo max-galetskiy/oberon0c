@@ -13,11 +13,15 @@
 using std::ostream;
 using std::string;
 
-void Logger::log(LogLevel level, const string &fileName, int lineNo, int charNo, const string &msg) {
+void Logger::log(LogLevel level, const string &fileName, int lineNo, int charNo, const string &msg, bool silent) {
     if (werror_ && level == LogLevel::WARNING) {
         level = LogLevel::ERROR;
     }
-    counts_[(unsigned int) level]++;
+
+    if(!silent){
+        counts_[(unsigned int) level]++;
+    }
+
     if (level >= level_) {
         ostream &out = (level == LogLevel::ERROR) ? err_ : out_;
         if (!fileName.empty()) {
@@ -39,50 +43,50 @@ void Logger::log(LogLevel level, const string &fileName, int lineNo, int charNo,
     }
 }
 
-void Logger::log(const LogLevel level, const string &fileName, const string &msg) {
-    log(level, fileName, -1, -1, msg);
+void Logger::log(const LogLevel level, const string &fileName, const string &msg, bool silent) {
+    log(level, fileName, -1, -1, msg,silent);
 }
 
-void Logger::log(const LogLevel level, const string &msg) {
-    log(level, {}, msg);
+void Logger::log(const LogLevel level, const string &msg, bool silent) {
+    log(level, {}, msg,silent);
 }
 
-void Logger::error(const FilePos &pos, const string &msg) {
+void Logger::error(const FilePos &pos, const string &msg, bool silent) {
 
     if(pos.fileName.empty()){
-        log(LogLevel::ERROR, PROJECT_NAME, pos.lineNo, pos.charNo, msg);
+        log(LogLevel::ERROR, PROJECT_NAME, pos.lineNo, pos.charNo, msg, silent);
     }else{
-        log(LogLevel::ERROR, pos.fileName, pos.lineNo, pos.charNo, msg);
+        log(LogLevel::ERROR, pos.fileName, pos.lineNo, pos.charNo, msg, silent);
     }
 }
 
-void Logger::error(const string &fileName, const string &msg) {
+void Logger::error(const string &fileName, const string &msg, bool silent) {
     if (fileName.empty()) {
-        log(LogLevel::ERROR, PROJECT_NAME, msg);
+        log(LogLevel::ERROR, PROJECT_NAME, msg, silent);
     } else {
-        log(LogLevel::ERROR, fileName, msg);
+        log(LogLevel::ERROR, fileName, msg, silent);
     }
 
 }
 
-void Logger::warning(const FilePos &pos, const string &msg) {
-    log(LogLevel::WARNING, pos.fileName, pos.lineNo, pos.charNo, msg);
+void Logger::warning(const FilePos &pos, const string &msg, bool silent) {
+    log(LogLevel::WARNING, pos.fileName, pos.lineNo, pos.charNo, msg, silent);
 }
 
-void Logger::warning(const string &fileName, const string &msg) {
+void Logger::warning(const string &fileName, const string &msg, bool silent) {
     if (fileName.empty()) {
-        log(LogLevel::WARNING, PROJECT_NAME, msg);
+        log(LogLevel::WARNING, PROJECT_NAME, msg, silent);
     } else {
-        log(LogLevel::WARNING, fileName, msg);
+        log(LogLevel::WARNING, fileName, msg, silent);
     }
 }
 
-void Logger::info(const string &msg) {
-    log(LogLevel::INFO, msg);
+void Logger::info(const string &msg, bool silent) {
+    log(LogLevel::INFO, msg,silent);
 }
 
-void Logger::debug(const string &msg) {
-    log(LogLevel::DEBUG, msg);
+void Logger::debug(const string &msg, bool silent) {
+    log(LogLevel::DEBUG, msg, silent);
 }
 
 int Logger::getDebugCount() const {

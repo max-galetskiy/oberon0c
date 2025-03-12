@@ -29,4 +29,4 @@ bool TypeInfo::operator==(TypeInfo other) {
     }
 }
 
-TypeInfo::TypeInfo(std::string name, TypeTag tag, std::optional<ext_info> val, std::vector<llvm::Type *> llvm_type) : name(std::move(name)),tag(tag), llvmType(llvm_type), extended_info(val){}
+TypeInfo::TypeInfo(std::string name, TypeTag tag, std::optional<ext_info> val) : name(std::move(name)),tag(tag), extended_info(val){}

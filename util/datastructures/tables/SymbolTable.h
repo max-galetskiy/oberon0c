@@ -60,12 +60,12 @@ public:
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, TypeTag tag);
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, const string &aliased_type);
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim);
-    std::shared_ptr<TypeInfo> insert_type(const string &type_name,std::unordered_map<string, std::shared_ptr<TypeInfo>> fields);
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name,std::map<string, std::shared_ptr<TypeInfo>> fields);
 
     IdentInfo *lookup(const std::string &name);
     std::shared_ptr<TypeInfo> lookup_field(const string &record_name, const string &field_name);
     std::shared_ptr<TypeInfo> lookup_type(const string& name);
-    std::optional<std::unordered_map<string, std::shared_ptr<TypeInfo>>> lookup_record(const string &record_name);
+    std::optional<std::map<string, std::shared_ptr<TypeInfo>>> lookup_record(const string &record_name);
 };
 
 #endif // OBERON0C_SYMBOLTABLE_H

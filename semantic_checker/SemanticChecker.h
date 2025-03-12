@@ -55,7 +55,7 @@ class SemanticChecker : NodeVisitor {
         void visit(ProcedureCallNode&) override;
 
         // Record fields
-        std::unordered_map<string,std::shared_ptr<TypeInfo>> key_value_map(RecordTypeNode&);
+        std::map<string,std::shared_ptr<TypeInfo>> key_value_map(RecordTypeNode&);
 
         // Typechecking
         std::shared_ptr<TypeInfo> create_new_type(TypeNode &type, const string& type_name, bool insert_into_table);

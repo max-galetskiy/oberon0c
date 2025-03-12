@@ -159,21 +159,15 @@ std::optional<long> ExpressionNode::get_value()
     return value_;
 }
 
-void ExpressionNode::set_types(std::shared_ptr<TypeInfo> formal, std::shared_ptr<TypeInfo> actual, TypeNode *node)
+void ExpressionNode::set_types(std::shared_ptr<TypeInfo> formal, std::shared_ptr<TypeInfo> actual)
 {
     formal_type = std::move(formal);
     actual_type = std::move(actual);
-    type_node = node;
 }
 
 std::shared_ptr<TypeInfo> ExpressionNode::get_formal_type()
 {
     return formal_type;
-}
-
-TypeNode *ExpressionNode::get_type_node()
-{
-    return type_node;
 }
 
 std::shared_ptr<TypeInfo> ExpressionNode::get_actual_type()

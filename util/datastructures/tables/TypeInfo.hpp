@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <variant>
+#include <map>
 #include <llvm/IR/Type.h>
 
 // records a "general type category", i.e. whether the type refers to an integer, boolean, array, record, ...
@@ -30,8 +31,8 @@ struct AliasTypeInfo{
 };
 
 struct RecordTypeInfo{
-    std::unordered_map<std::string, std::shared_ptr<TypeInfo>> fields;
-    RecordTypeInfo(std::unordered_map<std::string, std::shared_ptr<TypeInfo>>& fields) : fields(fields){};
+    std::map<std::string, std::shared_ptr<TypeInfo>> fields;
+    RecordTypeInfo(std::map<std::string, std::shared_ptr<TypeInfo>>& fields) : fields(fields){};
 };
 
 struct ArrayTypeInfo{
@@ -46,13 +47,12 @@ struct TypeInfo {
     std::string name;
 
     TypeTag tag;
-    std::vector<llvm::Type*> llvmType;
     std::optional<ext_info> extended_info = std::nullopt;
 
     bool operator!=(TypeInfo other);
     bool operator==(TypeInfo other);
 
-    TypeInfo(std::string  name, TypeTag tag, std::optional<ext_info> = std::nullopt, std::vector<llvm::Type*> = {});
+    TypeInfo(std::string  name, TypeTag tag, std::optional<ext_info> = std::nullopt);
 
 };
 

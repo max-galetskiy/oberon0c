@@ -91,10 +91,9 @@ set(SEMANTIC_SOURCES
 )
 
 set(CODEGEN_SOURCES
-        #code_generator/CodeGenerator.cpp
-        #code_generator/CodeGenerator.h
-        #util/datastructures/tables/VariableTable.cpp
-        #util/datastructures/tables/VariableTable.h
+        util/datastructures/tables/LLVMValueTable.cpp util/datastructures/tables/LLVMValueTable.h
+        code_generator/CodeGenerator.cpp
+        code_generator/CodeGenerator.h
 )
 
 set(ALL_SOURCES global.h ${UTIL_SOURCES} ${SCANNER_SOURCES} ${PARSER_SOURCES} ${SEMANTIC_SOURCES} ${CODEGEN_SOURCES}

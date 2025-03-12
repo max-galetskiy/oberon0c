@@ -77,10 +77,10 @@ std::vector<raw_field> RecordTypeNode::get_fields() {
     return fields;
 }
 
-void RecordTypeNode::insert_field_types(std::unordered_map<string, std::shared_ptr<TypeInfo>>& field_types) {
+void RecordTypeNode::insert_field_types(std::map<string, std::shared_ptr<TypeInfo>>& field_types) {
     field_typeinfos_ = field_types;
 }
 
-std::unordered_map<string, std::shared_ptr<TypeInfo>> *RecordTypeNode::get_field_types() {
+std::map<string, std::shared_ptr<TypeInfo>> *RecordTypeNode::get_field_types() {
     return &field_typeinfos_;
 }

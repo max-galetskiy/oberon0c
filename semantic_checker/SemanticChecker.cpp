@@ -75,7 +75,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
                 return error_type;
             }
 
-            expr.set_types(integer_type, integer_type, nullptr);
+            expr.set_types(integer_type, integer_type);
             return integer_type;
         }
 
@@ -94,7 +94,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
                 return error_type;
             }
 
-            expr.set_types(boolean_type, boolean_type, nullptr);
+            expr.set_types(boolean_type, boolean_type);
             return boolean_type;
         }
     }
@@ -114,7 +114,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
                 return error_type;
             }
 
-            expr.set_types(boolean_type, boolean_type, nullptr);
+            expr.set_types(boolean_type, boolean_type);
             return boolean_type;
         }
         else if (op == SourceOperator::NEG)
@@ -124,13 +124,13 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
                 logger_.error(expr.pos(), "Expression is not of type INTEGER.");
                 return error_type;
             }
-            expr.set_types(boolean_type, boolean_type, nullptr);
+            expr.set_types(boolean_type, boolean_type);
             return integer_type;
         }
         else if (op == SourceOperator::NO_OPERATOR || op == SourceOperator::PAREN)
         {
             auto inner_type = checkType(*inner);
-            expr.set_types(inner_type, trace_type(inner_type), nullptr);
+            expr.set_types(inner_type, trace_type(inner_type));
             return inner_type;
         }
     }
@@ -139,12 +139,12 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
 
         auto id_expr = &dynamic_cast<IdentSelectorExpressionNode &>(expr);
         auto id_selector_type = check_selector_type(*id_expr);
-        expr.set_types(id_selector_type, trace_type(id_selector_type), nullptr);
+        expr.set_types(id_selector_type, trace_type(id_selector_type));
         return id_selector_type;
     }
     else if (type == NodeType::integer)
     {
-        expr.set_types(integer_type, integer_type, nullptr);
+        expr.set_types(integer_type, integer_type);
         return integer_type;
     }
     else
@@ -290,6 +290,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_type(IdentSelectorExpr
 
     // check if identifier is defined
     auto identifier_info = scope_table_.lookup(identifier->get_value());
+    id_expr.get_identifier()->set_types(identifier_info->type, trace_type(identifier_info->type));
     if (!identifier_info)
     {
         logger_.error(id_expr.pos(), "Unknown Identifier: " + identifier->get_value());
@@ -298,13 +299,13 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_type(IdentSelectorExpr
 
     if (!selector || !selector->get_selector())
     {
-        id_expr.set_types(identifier_info->type, trace_type(identifier_info->type), nullptr);
+        id_expr.set_types(identifier_info->type, trace_type(identifier_info->type));
         return identifier_info->type;
     }
 
     // Check the selector chain for validity (visit the selector)
     auto type = check_selector_chain(*identifier, *selector);
-    id_expr.set_types(type, trace_type(type), nullptr);
+    id_expr.set_types(type, trace_type(type));
     return type;
 }
 
@@ -350,6 +351,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::trace_type(std::shared_ptr<TypeInfo> 
 std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &selector)
 {
     IdentInfo *prev_info = scope_table_.lookup(ident.get_value());
+    ident.set_types(prev_info->type, trace_type(prev_info->type));
 
     if (!selector.get_selector())
     {
@@ -615,7 +617,7 @@ void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
                     logger_.error(var->get()->pos(), "Multiple use of the same parameter name.");
                 }
 
-                var->get()->set_types(var_type, trace_type(var_type), type);
+                var->get()->set_types(var_type, trace_type(var_type));
                 scope_table_.insert(var->get()->get_value(), Kind::VARIABLE, var->get(), var_type);
             }
         }
@@ -665,7 +667,7 @@ void SemanticChecker::visit(DeclarationsNode &declars)
 
         // insert variable into scope table
         auto const_type = checkType(*itr->second);
-        itr->first->set_types(const_type, trace_type(const_type), nullptr);
+        itr->first->set_types(const_type, trace_type(const_type));
         scope_table_.insert(itr->first->get_value(), Kind::CONSTANT, itr->second, const_type);
     }
 
@@ -686,7 +688,10 @@ void SemanticChecker::visit(DeclarationsNode &declars)
         }
 
         // check the type definition and insert into scope table
-        create_new_type(*itr->second, itr->first->get_value(),true);
+        auto type = create_new_type(*itr->second, itr->first->get_value(),true);
+
+        itr->first->set_types(type, trace_type(type));
+        itr->second->set_types(type, trace_type(type));
     }
 
     // Variables:
@@ -720,7 +725,7 @@ void SemanticChecker::visit(DeclarationsNode &declars)
             }
 
             // insert variable into symbol table
-            (*el)->set_types(var_type, trace_type(var_type), itr->second);
+            (*el)->set_types(var_type, trace_type(var_type));
             scope_table_.insert((*el)->get_value(), Kind::VARIABLE, itr->second, var_type);
         }
     }
@@ -733,10 +738,10 @@ void SemanticChecker::visit(DeclarationsNode &declars)
 }
 
 // Fills a key-value-map-vector which is needed to place record types into the scope table
-std::unordered_map<string,std::shared_ptr<TypeInfo>> SemanticChecker::key_value_map(RecordTypeNode &node)
+std::map<string,std::shared_ptr<TypeInfo>> SemanticChecker::key_value_map(RecordTypeNode &node)
 {
     scope_table_.beginScope();
-    std::unordered_map<string,std::shared_ptr<TypeInfo>> key_value_map;
+    std::map<string,std::shared_ptr<TypeInfo>> key_value_map;
 
     auto fields = node.get_fields();
     for (auto field_itr = fields.begin(); field_itr != fields.end(); field_itr++)

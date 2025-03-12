@@ -49,7 +49,7 @@ std::shared_ptr<TypeInfo> SymbolTable::lookup_field(const string &record_name, c
     return (*field).second;
 }
 
-std::optional<std::unordered_map<string, std::shared_ptr<TypeInfo>>> SymbolTable::lookup_record(const string &record_name) {
+std::optional<std::map<string, std::shared_ptr<TypeInfo>>> SymbolTable::lookup_record(const string &record_name) {
     auto record = types_.find(record_name);
     if(record == types_.end()){
         return std::nullopt;
@@ -80,7 +80,7 @@ std::shared_ptr<TypeInfo> SymbolTable::insert_type(const string &type_name, std:
 }
 
 // Overload for RecordTypes
-std::shared_ptr<TypeInfo> SymbolTable::insert_type(const string &type_name,std::unordered_map<string, std::shared_ptr<TypeInfo>> fields)
+std::shared_ptr<TypeInfo> SymbolTable::insert_type(const string &type_name,std::map<string, std::shared_ptr<TypeInfo>> fields)
 {
     types_[type_name] = std::make_shared<TypeInfo>(type_name,RECORD,RecordTypeInfo(fields));
     return types_[type_name];

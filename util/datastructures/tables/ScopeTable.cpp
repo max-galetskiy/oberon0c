@@ -63,7 +63,7 @@ std::shared_ptr<TypeInfo> ScopeTable::lookup_field(const string &record_name, co
     return nullptr;
 }
 
-std::optional<std::unordered_map<string, std::shared_ptr<TypeInfo>>> ScopeTable::lookup_record(const string &record_name) {
+std::optional<std::map<string, std::shared_ptr<TypeInfo>>> ScopeTable::lookup_record(const string &record_name) {
     for (int i = current_scope; i >= 0; i--)
     {
         auto rec = scopes_[static_cast<size_t>(i)]->lookup_record(record_name);
@@ -103,7 +103,7 @@ std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::
     return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,std::move(elementType),dim);
 }
 
-std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::unordered_map<string, std::shared_ptr<TypeInfo>> fields) {
+std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::map<string, std::shared_ptr<TypeInfo>> fields) {
     return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,std::move(fields));
 }
 

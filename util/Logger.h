@@ -27,9 +27,9 @@ private:
     int counts_[(unsigned int) LogLevel::QUIET];
     bool werror_;
 
-    void log(LogLevel level, const string &fileName, int lineNo, int charNo, const string &msg);
-    void log(LogLevel level, const string &fileName, const string &msg);
-    void log(LogLevel level, const string &msg);
+    void log(LogLevel level, const string &fileName, int lineNo, int charNo, const string &msg, bool silent = false);
+    void log(LogLevel level, const string &fileName, const string &msg, bool silent = false);
+    void log(LogLevel level, const string &msg, bool silent = false);
 
 
 public:
@@ -40,12 +40,12 @@ public:
     Logger& operator=(const LogLevel&) = delete;
     ~Logger() = default;
 
-    void error(const FilePos &pos, const string &msg);
-    void error(const string &fileName, const string &msg);
-    void warning(const FilePos &pos, const string &msg);
-    void warning(const string &fileName, const string &msg);
-    void info(const string &msg);
-    void debug(const string &msg);
+    void error(const FilePos &pos, const string &msg, bool silent = false);
+    void error(const string &fileName, const string &msg, bool silent = false);
+    void warning(const FilePos &pos, const string &msg, bool silent = false);
+    void warning(const string &fileName, const string &msg, bool silent = false);
+    void info(const string &msg, bool silent = false);
+    void debug(const string &msg, bool silent = false);
 
     [[nodiscard]] int getDebugCount() const;
     [[nodiscard]] int getInfoCount() const;

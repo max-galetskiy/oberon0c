@@ -26,8 +26,9 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/raw_ostream.h>
 
-#include "util/datastructures/tables/TypeInfo.hpp.h"
+#include "util/datastructures/tables/TypeInfo.hpp"
 #include "util/datastructures/ast/NodeVisitor.h"
+#include "util/datastructures/tables/LLVMValueTable.h"
 
 enum class OutputFileType
 {
@@ -50,11 +51,9 @@ private:
     IRBuilder<> *builder_;
 
     std::unordered_map<string, Function *> procedures_;
+    LLVMValueTable variables_;
 
     llvm::Value *value_;
-    VariableTable variables_;
-    TypeInfoTable type_table_;
-    TypeInfoClass temp_type_;
 
     void init_target_machine();
     void init_builder();
@@ -72,7 +71,9 @@ public:
 
     void visit(IdentNode &) override;
     void visit(IntNode &) override;
-    [[noreturn]] void visit(SelectorNode &) override;
+    void visit(SelectorNode &) override;
+
+    llvm::Type* create_llvm_type(TypeNode&);
 
     void visit(TypeNode &) override;
     void visit(ArrayTypeNode &) override;

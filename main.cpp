@@ -9,7 +9,7 @@
 #include "scanner/Scanner.h"
 #include "parser/Parser.h"
 #include "semantic_checker/SemanticChecker.h"
-//#include "code_generator/CodeGenerator.h"
+#include "code_generator/CodeGenerator.h"
 
 using std::cerr;
 using std::cout;
@@ -27,7 +27,7 @@ int main(const int argc, const char *argv[]) {
     string filename = argv[1];
     Logger logger;
 
-    /*OutputFileType output_type;
+    OutputFileType output_type;
     if(argc > 2){
         auto flag = string(argv[2]);
         if(flag == "-o" || flag == "-O"){
@@ -46,7 +46,7 @@ int main(const int argc, const char *argv[]) {
     }
     else{
         output_type = OutputFileType::LLVMIRFile;
-    }*/
+    }
 
     if(argc > 3){
         if(string(argv[3]) == "--debug"){
@@ -71,35 +71,35 @@ int main(const int argc, const char *argv[]) {
     auto ast = parser.parse();
     if(ast && logger.getErrorCount() == 0){
         std::cout << "Compiled Program:" << std::endl << *ast << std::endl;
-        logger.info("Parsing successful.");
+        logger.info("Parsing successful. Starting semantic checking...", true);
 
         // Semantic Checking
         SemanticChecker semantics(logger);
         semantics.validate_program(*ast);
 
         if(logger.getErrorCount() > 0){
-            logger.info("Errors occurred during semantic checking.");
+            logger.info("Errors occurred during semantic checking.", true);
         }
         else{
 
-            logger.info("Semantic checking successful. Starting code generation...");
+            logger.info("Semantic checking successful. Starting code generation...", true);
 
             // Code Generation
-            //CodeGenerator code_gen(filename,output_type);
-            //code_gen.generate_code(*ast);
+            CodeGenerator code_gen(filename,output_type);
+            code_gen.generate_code(*ast);
 
-            logger.info("Code generation successful.");
+            logger.info("Code generation successful.", true);
 
         }
 
     }else{
-        logger.info("Errors occurred during parsing.");
+        logger.info("Errors occurred during parsing.", true);
     }
 
     string status = (logger.getErrorCount() == 0 ? "complete" : "failed");
     logger.info("Compilation " + status + ": " +
                 to_string(logger.getErrorCount()) + " error(s), " +
                 to_string(logger.getWarningCount()) + " warning(s), " +
-                to_string(logger.getInfoCount()) + " message(s).");
+                to_string(logger.getInfoCount()) + " message(s).", true);
     exit(logger.getErrorCount() != 0);
 }
