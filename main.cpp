@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include "util/command_line_options.hpp"
 #include "scanner/Scanner.h"
 #include "parser/Parser.h"
 #include "semantic_checker/SemanticChecker.h"
@@ -18,59 +19,60 @@ using std::string;
 
 int main(const int argc, const char *argv[]) {
 
-    const auto usage_string = "Usage: oberon0c <filename> [-o|-s|-ll] [--debug]";
+    auto options = init_options();
+    auto vm = create_value_map(options.get(),argc,argv);
+    po::notify(*vm);
 
-    if (argc < 2 || argc > 4) {
-        cerr << usage_string << endl;
-        exit(1);
+    if(vm->count("help")){
+        cout << "Oberon0 to LLVM-IR Compiler\n";
+        cout << "Usage: oberon0c [options] file\n";
+        cout << *options << std::endl;
+        return 0;
     }
-    string filename = argv[1];
+
+    if(!vm->count("input")){
+        cerr << "No input files specified." << endl;
+        return 1;
+    }
+
+    string filename = (*vm)["input"].as<string>();
+
     Logger logger;
-
-    OutputFileType output_type;
-    if(argc > 2){
-        auto flag = string(argv[2]);
-        if(flag == "-o" || flag == "-O"){
-            output_type = OutputFileType::ObjectFile;
-        }
-        else if(flag == "-s" || flag == "-S"){
-            output_type = OutputFileType::AssemblyFile;
-        }
-        else if(flag == "-ll" || flag == "-LL"){
-            output_type = OutputFileType::LLVMIRFile;
-        }
-        else{
-            cerr << "Invalid argument: " << argv[2] << std::endl << usage_string << std::endl;
-            exit(1);
-        }
-    }
-    else{
-        output_type = OutputFileType::LLVMIRFile;
-    }
-
-    if(argc > 3){
-        if(string(argv[3]) == "--debug"){
-            logger.setLevel(LogLevel::DEBUG);
-        }
-        else{
-            cerr << "Invalid argument: " << argv[3] << std::endl << usage_string << std::endl;
-            exit(1);
-        }
-    }
-    else{
+    if(vm->count("quiet")){
+        logger.setLevel(LogLevel::QUIET);
+    } else if(vm->count("debug")){
+        logger.setLevel(LogLevel::DEBUG);
+    } else{
         logger.setLevel(LogLevel::INFO);
     }
 
-
+    OutputFileType output_type;
+    auto specified_output_type = (vm->count("filetype"))? (*vm)["filetype"].as<string>() : "ll";
+    if(specified_output_type == "ll"){
+        output_type = OutputFileType::LLVMIRFile;
+    }else if(specified_output_type == "asm"){
+        output_type = OutputFileType::AssemblyFile;
+    }else if(specified_output_type == "obj"){
+        output_type = OutputFileType::ObjectFile;
+    }else{
+        cerr << "Requested output filetype '" << specified_output_type << "' not supported." << endl;
+        return 1;
+    }
 
     // Scanning
+    logger.info("Starting scanning...",true);
     Scanner scanner(filename, logger);
+    logger.info("Scanning successful. Starting Parsing...",true);
 
     // Parsing
     Parser parser(scanner,logger);
     auto ast = parser.parse();
     if(ast && logger.getErrorCount() == 0){
-        std::cout << "Compiled Program:" << std::endl << *ast << std::endl;
+
+        if(vm->count("print")){
+            std::cout << "Compiled Program:" << std::endl << *ast << std::endl;
+        }
+
         logger.info("Parsing successful. Starting semantic checking...", true);
 
         // Semantic Checking

@@ -48,6 +48,8 @@ set(UTIL_SOURCES
         util/panic.cpp util/panic.h
         util/datastructures/tables/TypeInfo.cpp
         util/datastructures/tables/TypeInfo.hpp
+        util/command_line_options.hpp
+        util/command_line_options.cpp
 )
 
 set(SCANNER_SOURCES
