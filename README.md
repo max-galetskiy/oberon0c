@@ -14,7 +14,10 @@ This code depends on [LLVM](https://llvm.org/) and the following [Boost](https:/
  * [APT](https://wiki.debian.org/Apt) for Linux
 
 ## How to build
-tba
+The project must be built from source. Both CMake and a C++ compiler supporting the C++17 standard are required. If these requirements are statisfied, then the `CMakeList.txt` file handles the building of the project. Additionally, the project may also be built with Docker using the `Dockerfile`, but expect limited support.
 
 ## Authors and acknowledgement
-tba 
+The initial skeleton for the project and the scanner used were both written by [Michael Grossniklaus](https://dbis.uni-konstanz.de/people/people/grossniklaus/) for the previously mentioned M.Sc. course. Major parts of the initial code generation segments and a lot of supporting code of other sections were written by [Elias Maier](https://github.com/eelias13).
+
+The majority of the project and all it's future updates are written by Max Galetskiy.
+
