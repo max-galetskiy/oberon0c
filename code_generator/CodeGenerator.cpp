@@ -88,10 +88,40 @@ void CodeGenerator::visit(BinaryExpressionNode &expr)
 
     auto op = expr.get_op();
 
+    // Boolean operators are treated specially because of short-circuit evalution
+    if(op == SourceOperator::AND || op == SourceOperator::OR){
+
+        bool is_and_op = op == SourceOperator::AND;
+
+        // LHS will always be evaluated
+        auto lhs_block = builder_->GetInsertBlock();
+        expr.get_lhs()->accept(*this);
+        auto lhs_value = value_;
+
+        auto bool_rhs = BasicBlock::Create(builder_->getContext(),"bool_rhs",builder_->GetInsertBlock()->getParent());
+        auto post_bool = BasicBlock::Create(builder_->getContext(),"post_bool",builder_->GetInsertBlock()->getParent());
+
+        (is_and_op)? builder_->CreateCondBr(lhs_value,bool_rhs,post_bool) : builder_->CreateCondBr(lhs_value,post_bool,bool_rhs);             // Branching dependent on boolean operation
+
+        // RHS is executed in bool_rhs block
+        builder_->SetInsertPoint(bool_rhs);
+        expr.get_rhs()->accept(*this);
+        auto rhs_value = value_;
+        auto rhs_block = builder_->GetInsertBlock();       // Note that for nested conditions with further basic blocks this may be different than "bool_rhs"
+        builder_->CreateBr(post_bool);
+
+        // Rest of the code is continued in the post_bool branch after resolving the SSA-Phi function
+        builder_->SetInsertPoint(post_bool);
+        auto phi = builder_->CreatePHI(value_->getType(),2,"phi");
+        phi->addIncoming(lhs_value,lhs_block);
+        phi->addIncoming(rhs_value,rhs_block);
+        value_ = phi;
+        return;
+    }
+
+
     expr.get_lhs()->accept(*this);
     llvm::Value *lhsValue = value_;
-
-    // TODO: add Short-Circuit Evaluation
 
     expr.get_rhs()->accept(*this);
     llvm::Value *rhsValue = value_;
@@ -99,7 +129,7 @@ void CodeGenerator::visit(BinaryExpressionNode &expr)
     switch (op)
     {
 
-    // arithmetic operation
+    // Arithmetic Operator
     case SourceOperator::PLUS:
         value_ = builder_->CreateAdd(lhsValue, rhsValue, "add");
         break;
@@ -117,16 +147,9 @@ void CodeGenerator::visit(BinaryExpressionNode &expr)
         value_ = builder_->CreateSRem(lhsValue, rhsValue, "mod");
         break;
 
-    // boolean operation
-    case SourceOperator::OR:
-        value_ = builder_->CreateOr(lhsValue, rhsValue, "or");
-        break;
+    // Note: Boolean operators already handled
 
-    case SourceOperator::AND:
-        value_ = builder_->CreateAnd(lhsValue, rhsValue, "and");
-        break;
-
-    // relational operation
+    // Relational operator
     case SourceOperator::EQ:
         value_ = builder_->CreateICmpEQ(lhsValue, rhsValue, "eq");
         break;
