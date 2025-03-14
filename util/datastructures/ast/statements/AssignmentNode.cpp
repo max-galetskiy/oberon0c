@@ -14,16 +14,17 @@ void AssignmentNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void AssignmentNode::print(ostream &stream) const
-{
-    stream << *variable_;
+string AssignmentNode::to_string() const {
+
+    string s = variable_->to_string();
 
     if (selector_)
     {
-        stream << *selector_;
+        s += selector_->to_string();
     }
 
-    stream << " := " << *expr_;
+    s += " := " + expr_->to_string();
+    return s;
 }
 
 AssignmentNode::AssignmentNode(FilePos pos, std::unique_ptr<IdentNode> variable, std::unique_ptr<SelectorNode> selector, std::unique_ptr<ExpressionNode> expr)
@@ -39,4 +40,4 @@ SelectorNode *AssignmentNode::get_selector() {
 
 ExpressionNode *AssignmentNode::get_expr() {
     return expr_.get();
-};
+}

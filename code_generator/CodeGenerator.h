@@ -89,6 +89,7 @@ public:
     void visit(RepeatStatementNode &) override;
     void visit(StatementSequenceNode &) override;
     void visit(WhileStatementNode &) override;
+    void visit(ReturnStatementNode &) override;
 
     void visit(ModuleNode &) override;
 

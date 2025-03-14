@@ -29,7 +29,7 @@ class IfStatementNode : public StatementNode {
         void add_else(std::unique_ptr<StatementSequenceNode> else_statements);
 
         void accept(NodeVisitor &visitor) override;
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
 
         ExpressionNode* get_condition();
         StatementSequenceNode* get_then();

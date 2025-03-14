@@ -19,7 +19,7 @@ class RepeatStatementNode : public StatementNode {
 
     public:
         RepeatStatementNode(FilePos pos, std::unique_ptr<ExpressionNode> condition, std::unique_ptr<StatementSequenceNode> statements);
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
         void accept(NodeVisitor &visitor) override;
 
         ExpressionNode* get_expr();

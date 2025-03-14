@@ -20,3 +20,7 @@ std::ostream& operator<<(std::ostream &stream, const Node &node) {
     node.print(stream);
     return stream;
 }
+
+void Node::print(ostream &stream) const {
+    stream << this->to_string();
+}

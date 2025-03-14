@@ -21,7 +21,7 @@ class WhileStatementNode : public StatementNode {
 
         WhileStatementNode(FilePos pos,std::unique_ptr<ExpressionNode> condition,std::unique_ptr<StatementSequenceNode> statements);
         void accept(NodeVisitor &visitor) override;
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
 
         ExpressionNode* get_expr();
         StatementSequenceNode* get_statements();

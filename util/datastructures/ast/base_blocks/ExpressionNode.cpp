@@ -52,66 +52,45 @@ SourceOperator ExpressionNode::token_to_op(TokenType t)
     }
 }
 
-void ExpressionNode::print_operator(ostream &stream, SourceOperator op)
+string ExpressionNode::print_operator(SourceOperator op)
 {
     switch (op)
     {
     case PLUS:
-        stream << "+";
-        break;
+        return "+";
     case MINUS:
     case NEG:
-        stream << "-";
-        break;
+        return "-";
     case OR:
-        stream << "OR";
-        break;
+        return "OR";
     case MULT:
-        stream << "*";
-        break;
+        return "*";
     case DIV:
-        stream << "DIV";
-        break;
+        return "DIV";
     case MOD:
-        stream << "MOD";
-        break;
+        return "MOD";
     case AND:
-        stream << "&";
-        break;
+        return "&";
     case NOT:
-        stream << "~";
-        break;
+        return "~";
     case EQ:
-        stream << "=";
-        break;
+        return "=";
     case NEQ:
-        stream << "#";
-        break;
+        return "#";
     case LT:
-        stream << "<";
-        break;
+        return "<";
     case LEQ:
-        stream << "<=";
-        break;
+        return "<=";
     case GT:
-        stream << ">";
-        break;
+        return ">";
     case GEQ:
-        stream << ">=";
-        break;
+        return ">=";
     case PAREN:
-        return;
+        return "";
     case NO_OPERATOR:
     default:
-        stream << "<ERROR_OP>";
-        break;
+        return "<ERROR_OP>";
     }
-}
-
-std::ostream &operator<<(ostream &stream, const SourceOperator op)
-{
-    ExpressionNode::print_operator(stream, op);
-    return stream;
 }
 
 int ExpressionNode::op_to_precedence(SourceOperator op)
@@ -185,19 +164,6 @@ void UnaryExpressionNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void UnaryExpressionNode::print(ostream &stream) const
-{
-
-    if (op_ == SourceOperator::PAREN)
-    {
-        stream << "(" << *expr_ << ")";
-    }
-    else
-    {
-        stream << op_ << " " << *(expr_);
-    }
-}
-
 ExpressionNode *UnaryExpressionNode::get_expr()
 {
     return expr_.get();
@@ -208,6 +174,17 @@ SourceOperator UnaryExpressionNode::get_op()
     return op_;
 }
 
+string UnaryExpressionNode::to_string() const {
+    if (op_ == SourceOperator::PAREN)
+    {
+        return "(" + expr_->to_string() + ")";
+    }
+    else
+    {
+        return print_operator(op_) + " " + expr_->to_string();
+    }
+}
+
 BinaryExpressionNode::BinaryExpressionNode(FilePos pos, std::unique_ptr<ExpressionNode> lhs, SourceOperator op, std::unique_ptr<ExpressionNode> rhs) : ExpressionNode(pos, NodeType::binary_expression), op_(op), lhs_(std::move(lhs)), rhs_(std::move(rhs))
 {
     precedence_ = op_to_precedence(op);
@@ -216,11 +193,6 @@ BinaryExpressionNode::BinaryExpressionNode(FilePos pos, std::unique_ptr<Expressi
 void BinaryExpressionNode::accept(NodeVisitor &visitor)
 {
     visitor.visit(*this);
-}
-
-void BinaryExpressionNode::print(ostream &stream) const
-{
-    stream << *lhs_ << " " << op_ << " " << *rhs_;
 }
 
 BinaryExpressionNode *BinaryExpressionNode::insert_rightmost(SourceOperator op, std::unique_ptr<ExpressionNode> new_rhs)
@@ -244,6 +216,10 @@ SourceOperator BinaryExpressionNode::get_op()
     return op_;
 }
 
+string BinaryExpressionNode::to_string() const {
+    return lhs_->to_string() + " " + print_operator(op_) + " " + rhs_->to_string();
+}
+
 IdentSelectorExpressionNode::IdentSelectorExpressionNode(FilePos pos, std::unique_ptr<IdentNode> ident, std::unique_ptr<SelectorNode> selector) : ExpressionNode(pos, NodeType::ident_selector_expression), ident_(std::move(ident)), selector_(std::move(selector)) {}
 
 void IdentSelectorExpressionNode::accept(NodeVisitor &visitor)
@@ -251,15 +227,6 @@ void IdentSelectorExpressionNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void IdentSelectorExpressionNode::print(ostream &stream) const
-{
-    stream << *ident_;
-
-    if (selector_)
-    {
-        stream << *selector_;
-    }
-}
 
 IdentNode *IdentSelectorExpressionNode::get_identifier()
 {
@@ -269,4 +236,14 @@ IdentNode *IdentSelectorExpressionNode::get_identifier()
 SelectorNode *IdentSelectorExpressionNode::get_selector()
 {
     return selector_.get();
+}
+
+string IdentSelectorExpressionNode::to_string() const {
+
+    if (!selector_) {
+        return ident_->to_string();
+    }
+
+    return ident_->to_string() + selector_->to_string();
+
 }

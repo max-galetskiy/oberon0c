@@ -20,7 +20,6 @@ public:
 
 
     virtual void accept(NodeVisitor &visitor) override;
-    virtual void print(std::ostream &stream) const = 0;
 
     void set_types(std::shared_ptr<TypeInfo> formal, std::shared_ptr<TypeInfo> actual);
     std::shared_ptr<TypeInfo> get_formal_type();

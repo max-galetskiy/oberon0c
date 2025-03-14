@@ -23,6 +23,7 @@
 #include "util/datastructures/ast/statements/RepeatStatementNode.h"
 #include "util/datastructures/ast/statements/StatementSequenceNode.h"
 #include "util/datastructures/ast/statements/WhileStatementNode.h"
+#include "util/datastructures/ast/statements/ReturnStatementNode.hpp"
 
 #include "ModuleNode.h"
 
@@ -52,6 +53,7 @@ public:
     virtual void visit(IfStatementNode&) = 0;
     virtual void visit(ProcedureCallNode&) = 0;
     virtual void visit(RepeatStatementNode&) = 0;
+    virtual void visit(ReturnStatementNode&) = 0;
     virtual void visit(StatementSequenceNode&) = 0;
     virtual void visit(WhileStatementNode&) = 0;
 

@@ -34,7 +34,7 @@ public:
     void add_field_list(std::unique_ptr<field> field_list);
 
     void accept(NodeVisitor &visitor) override;
-    void print(std::ostream &stream) const override;
+    string to_string() const override;
 
     std::vector<raw_field> get_fields();
     std::map<string, std::shared_ptr<TypeInfo>> *get_field_types();

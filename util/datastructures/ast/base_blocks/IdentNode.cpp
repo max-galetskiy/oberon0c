@@ -10,11 +10,10 @@ void IdentNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void IdentNode::print(ostream &stream) const
-{
-    stream << name_;
+string IdentNode::get_value() {
+    return name_;
 }
 
-string IdentNode::get_value() {
+string IdentNode::to_string() const {
     return name_;
 }

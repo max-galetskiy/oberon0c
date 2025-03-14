@@ -22,7 +22,7 @@ class AssignmentNode : public StatementNode{
         AssignmentNode(FilePos pos, std::unique_ptr<IdentNode> variable,std::unique_ptr<SelectorNode> selector, std::unique_ptr<ExpressionNode> expr);
 
         void accept(NodeVisitor &visitor) override;
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
 
         IdentNode* get_variable();
         SelectorNode* get_selector();

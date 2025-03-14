@@ -8,6 +8,7 @@
 SemanticChecker::SemanticChecker(Logger &logger) : logger_(logger)
 {
     scope_table_ = ScopeTable();
+    current_procedure_ = std::nullopt;
 }
 
 // Expressions:
@@ -18,7 +19,6 @@ SemanticChecker::SemanticChecker(Logger &logger) : logger_(logger)
 //      --> Arithmetic Operators must have INTEGER values and return INTEGER
 //      --> Comparison Operators must have the same type and  return BOOLEAN
 //      --> Boolean Operators must have BOOLEAN values and return BOOLEAN
-// Type is returned as a string with special types denotes by an underscore (as Oberon0 does not allow underscores as the start of identifiers)
 std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
 {
 
@@ -290,12 +290,12 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_type(IdentSelectorExpr
 
     // check if identifier is defined
     auto identifier_info = scope_table_.lookup(identifier->get_value());
-    id_expr.get_identifier()->set_types(identifier_info->type, trace_type(identifier_info->type));
     if (!identifier_info)
     {
         logger_.error(id_expr.pos(), "Unknown Identifier: " + identifier->get_value());
         return error_type;
     }
+    id_expr.get_identifier()->set_types(identifier_info->type, trace_type(identifier_info->type));
 
     if (!selector || !selector->get_selector())
     {
@@ -351,16 +351,15 @@ std::shared_ptr<TypeInfo> SemanticChecker::trace_type(std::shared_ptr<TypeInfo> 
 std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident, SelectorNode &selector)
 {
     IdentInfo *prev_info = scope_table_.lookup(ident.get_value());
-    ident.set_types(prev_info->type, trace_type(prev_info->type));
-
-    if (!selector.get_selector())
-    {
-        return prev_info->type;
-    }
-
     if(!prev_info){
         logger_.error(ident.pos(),"Unknown identifier: " + ident.get_value());
         return error_type;
+    }
+
+    ident.set_types(prev_info->type, trace_type(prev_info->type));
+    if (!selector.get_selector())
+    {
+        return prev_info->type;
     }
 
     auto chain = selector.get_selector();
@@ -452,7 +451,11 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident
 }
 
 // Verifies, creates and inserts new type into typetable
-std::shared_ptr<TypeInfo> SemanticChecker::create_new_type(TypeNode &type, const string &type_name, bool insert_into_table) {
+std::shared_ptr<TypeInfo> SemanticChecker::create_new_type(TypeNode &type, string type_name, bool insert_into_table) {
+
+    if(type_name.empty()){
+        type_name = type.to_string();
+    }
 
     // Identifier:
     //      --> Must refer to a valid type
@@ -531,7 +534,6 @@ std::shared_ptr<TypeInfo> SemanticChecker::create_new_type(TypeNode &type, const
     panic("Invalid NodeType passed as TypeNode!");
 }
 
-
 // Module:
 //      --> The beginning and ending names should align
 //      --> A module opens a new scope
@@ -555,6 +557,7 @@ void SemanticChecker::visit(ModuleNode &module)
     visit(*module.get_declarations());
 
     // validate statements
+    current_procedure_ = std::nullopt;
     visit(*module.get_statements());
 
     scope_table_.endScope();
@@ -563,6 +566,7 @@ void SemanticChecker::visit(ModuleNode &module)
 // Procedure Declaration:
 //      --> Beginning and ending names should align
 //      --> A procedure opens a new scope
+//      --> A RETURN statement has to exist for a non-void function
 void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
 {
 
@@ -578,8 +582,14 @@ void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
         logger_.error(procedure.pos(), "Multiple declarations for procedure '" + names.first->get_value() + "' found (Note: Oberon0 does not allow overloading functions).");
     }
 
+    auto prev_procedure = current_procedure_;
+    current_procedure_ = names.first->get_value();
+
+    // Check the return_type
+    std::shared_ptr<TypeInfo> return_type = (procedure.get_return_type_node()) ? create_new_type(*procedure.get_return_type_node(),"",false) : nullptr;
+
     // Save the procedure name (before opening up a new scope!)
-    scope_table_.insert(names.first->get_value(), Kind::PROCEDURE, &procedure, error_type);
+    scope_table_.insert(names.first->get_value(), Kind::PROCEDURE, &procedure, return_type);
 
     // Open up new scope
     scope_table_.beginScope();
@@ -630,6 +640,7 @@ void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
     visit(*procedure.get_statements());
 
     scope_table_.endScope();
+    current_procedure_ = prev_procedure;
 }
 
 // Declarations:
@@ -804,6 +815,9 @@ void SemanticChecker::visit(StatementNode &node)
     {
         visit(dynamic_cast<ProcedureCallNode &>(node));
     }
+    else if(node.getNodeType() == NodeType::return_statement){
+        visit(dynamic_cast<ReturnStatementNode &>(node));
+    }
 }
 
 // Assignment:
@@ -921,6 +935,46 @@ void SemanticChecker::visit(WhileStatementNode &node)
 
     // Validate Statements
     visit(*node.get_statements());
+}
+
+// Return Statement:
+//      --> Expression must be valid
+//      --> Return type must match the type specified by the procedure declaration
+void SemanticChecker::visit(ReturnStatementNode &node) {
+
+    // If found in "main" function
+    if(!current_procedure_.has_value()){
+        logger_.error(node.pos(), "Illegal RETURN Statement found in main method of module.");
+        return;
+    }
+
+    // Get the return type of the current procedure
+
+    auto procedure_info = scope_table_.lookup(current_procedure_.value());
+    if(!procedure_info){
+        panic("Found no information on procedure '" + current_procedure_.value() + "'.");
+    }
+
+    auto return_type = procedure_info->type;
+
+    // "Void" Procedure
+    if(!return_type){
+        if(node.get_value()){
+            logger_.error(node.pos(), "Return value provided for a procedure without return value.");
+        }
+        return;
+    }
+
+    // Nothing returned, even though a return value is expected
+    if(!node.get_value()){
+        logger_.error(node.pos(), "Procedure '" + current_procedure_.value() + "' needs to return a value of type " + return_type->name + ".");
+    }
+
+    auto returned_type = checkType(*node.get_value());
+    if(*return_type != *returned_type){
+        logger_.error(node.pos(), "Type of return value does not match the return type of the procedure '" + current_procedure_.value() + "' (Expected " + return_type->name + ", got " + returned_type->name + ")");
+    }
+
 }
 
 // ProcedureCall:

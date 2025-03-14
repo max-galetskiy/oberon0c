@@ -11,10 +11,11 @@ void ArrayTypeNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void ArrayTypeNode::print(ostream &stream) const
+string ArrayTypeNode::to_string() const
 {
-    stream << "ARRAY " << *dim_ << " OF " << *type_;
+    return "ARRAY " + dim_->to_string() + " OF " + type_->to_string();
 }
+
 
 ExpressionNode *ArrayTypeNode::get_dim_node()
 {
@@ -35,3 +36,4 @@ std::optional<long> ArrayTypeNode::get_dim()
 {
     return dimension_;
 }
+

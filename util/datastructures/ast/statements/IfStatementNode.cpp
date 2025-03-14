@@ -13,21 +13,22 @@ void IfStatementNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void IfStatementNode::print(ostream &stream) const
+string IfStatementNode::to_string() const
 {
-    stream << "IF " << *condition_ << " THEN\n" << *then_statements_;
+    string s = "IF " + condition_->to_string() + " THEN\n" + then_statements_->to_string();
 
     for (auto itr = else_ifs_.begin(); itr != else_ifs_.end(); itr++)
     {
-        stream << "\n\tELSE IF " << *(itr->first) << " THEN\n" << *(itr->second);
+        s += "\n\tELSE IF " + (itr->first)->to_string() + " THEN\n" + (itr->second)->to_string();
     }
 
     if (else_statements_)
     {
-        stream << "\n\tELSE\n" << *else_statements_;
+        s += "\n\tELSE\n" + else_statements_->to_string();
     }
 
-    stream << "\n\tEND";
+    s += "\n\tEND";
+    return s;
 }
 
 void IfStatementNode::add_else_if(std::unique_ptr<ExpressionNode> expr, std::unique_ptr<StatementSequenceNode> statements)
@@ -56,4 +57,5 @@ std::vector<ElseIfPair> *IfStatementNode::get_else_ifs() {
 
 StatementSequenceNode *IfStatementNode::get_else() {
     return else_statements_.get();
-};
+}
+

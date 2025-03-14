@@ -12,10 +12,10 @@ void WhileStatementNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void WhileStatementNode::print(ostream &stream) const
+string WhileStatementNode::to_string() const
 {
 
-    stream << "WHILE " << *condition_ << " DO\n" << *statements_ << "\n\tEND";
+    return "WHILE " + condition_->to_string() + " DO\n" + statements_->to_string() + "\n\tEND";
 }
 
 WhileStatementNode::WhileStatementNode(FilePos pos, std::unique_ptr<ExpressionNode> condition, std::unique_ptr<StatementSequenceNode> statements) : StatementNode(NodeType::while_statement, pos), condition_(std::move(condition)), statements_(std::move(statements)) {}
@@ -26,4 +26,4 @@ ExpressionNode *WhileStatementNode::get_expr() {
 
 StatementSequenceNode *WhileStatementNode::get_statements() {
     return statements_.get();
-};
+}

@@ -13,30 +13,30 @@ void ProcedureCallNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void ProcedureCallNode::print(ostream &stream) const
+string ProcedureCallNode::to_string() const
 {
-    stream << *ident_;
+    string s = ident_->to_string();
 
     if(selector_){
-        stream << *selector_;
+        s += selector_->to_string();
     }
 
     if (parameters_)
     {
-        stream << "(";
+        s += "(";
 
         for (auto itr = parameters_->begin(); itr != parameters_->end(); itr++)
         {
             if(itr > parameters_->begin()){
-                stream << ", ";
+                s += ", ";
             }
 
-            stream << *(*itr);
+            s += (*itr)->to_string();
         }
 
-        stream << ")";
-
+        s += ")";
     }
+    return s;
 }
 
 ProcedureCallNode::ProcedureCallNode(FilePos pos, std::unique_ptr<IdentNode> name,std::unique_ptr<SelectorNode> selector, std::unique_ptr<std::vector<std::unique_ptr<ExpressionNode>>> parameters) : StatementNode(NodeType::procedure_call, pos), ident_(std::move(name)), selector_(std::move(selector)), parameters_(std::move(parameters))  {}

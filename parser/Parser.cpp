@@ -7,25 +7,25 @@
 #include "../scanner/IdentToken.h"
 #include "../util/panic.h"
 
-std::unique_ptr<const Token> Parser::expect(TokenType exprect)
+std::unique_ptr<const Token> Parser::expect(TokenType expect)
 {
 
-    if (scanner_.peek()->type() == exprect)
+    if (scanner_.peek()->type() == expect)
     {
         auto token = scanner_.next();
         return token;
     }
 
-    std::ostringstream exprected;
+    std::ostringstream expected;
     std::ostringstream got;
 
     got << scanner_.peek()->type();
-    exprected << exprect;
+    expected << expect;
 
     std::ostringstream msg;
 
     msg << "Syntax Error (Expected ";
-    msg << exprected.str();
+    msg << expected.str();
     msg << " but got ";
     msg << got.str();
     msg << ")";
@@ -70,9 +70,9 @@ std::unique_ptr<const Token> Parser::expect_many(std::vector<TokenType> tokens)
     return nullptr;
 }
 
-bool Parser::if_next(TokenType exprect)
+bool Parser::if_next(TokenType expect)
 {
-    return scanner_.peek()->type() == exprect;
+    return scanner_.peek()->type() == expect;
 }
 
 // ident -> letter (letter | digit)*  (already recognized by the scanner in full)
@@ -418,11 +418,11 @@ std::unique_ptr<WhileStatementNode> Parser::while_statement()
 {
     logger_.debug("While Statement");
     auto start = scanner_.peek()->start();
-    this->expect(TokenType::kw_while);
+    expect(TokenType::kw_while);
     auto cond = expression();
-    this->expect(TokenType::kw_do);
+    expect(TokenType::kw_do);
     auto statements = statement_sequence();
-    this->expect(TokenType::kw_end);
+    expect(TokenType::kw_end);
     return std::make_unique<WhileStatementNode>(start, std::move(cond), std::move(statements)); // successful;
 }
 
@@ -431,15 +431,30 @@ std::unique_ptr<RepeatStatementNode> Parser::repeat_statement()
 {
     logger_.debug("Repeat Statement");
     auto start = scanner_.peek()->start();
-    this->expect(TokenType::kw_repeat);
+    expect(TokenType::kw_repeat);
     auto statements = statement_sequence();
-    this->expect(TokenType::kw_until);
+    expect(TokenType::kw_until);
     auto cond = expression();
     return std::make_unique<RepeatStatementNode>(start, std::move(cond), std::move(statements));
 }
 
-// Statement -> (assignment | Procedure Call | IfStatement | WhileStatement)
-// Note: While not included in the CompilerConstruction book, this should contain "RepeatStatement" as well
+// ReturnStatement -> "RETURN" (Expression)?
+std::unique_ptr<ReturnStatementNode> Parser::return_statement() {
+    logger_.debug("Return Statement");
+
+    auto start = scanner_.peek()->start();
+    expect(TokenType::kw_return);
+
+    // If an "END" or an ";" follows, then the Return statement is empty
+    if(if_next(TokenType::kw_end) || if_next(TokenType::semicolon)){
+        return std::make_unique<ReturnStatementNode>(start);
+    }
+
+    return std::make_unique<ReturnStatementNode>(start,expression());
+
+}
+
+// Statement -> (assignment | Procedure Call | IfStatement | WhileStatement | RepeatStatement | ReturnStatement)
 std::unique_ptr<StatementNode> Parser::statement()
 {
 
@@ -464,6 +479,12 @@ std::unique_ptr<StatementNode> Parser::statement()
     {
         return repeat_statement();
     }
+
+    // ReturnStatement
+    else if(this->if_next(TokenType::kw_return)){
+        return return_statement();
+    }
+
     // Check the next token to decide which Non-terminal "Statement" is derived into
     else
     {
@@ -650,20 +671,31 @@ std::unique_ptr<parameters> Parser::formal_parameters()
     return formal_params;
 }
 
-// ProcedureHeadingNode -> "PROCEDURE" Ident (FormalParameters)?
-std::pair<std::unique_ptr<IdentNode>,std::unique_ptr<parameters>> Parser::procedure_heading()
+// ProcedureHeadingNode -> "PROCEDURE" Ident (FormalParameters)? (":" Type)?
+std::tuple<std::unique_ptr<IdentNode>,std::unique_ptr<parameters>,std::unique_ptr<TypeNode>> Parser::procedure_heading()
 {
     logger_.debug("Procedure Heading");
     auto start = scanner_.peek()->start();
     this->expect(TokenType::kw_procedure);
     auto id = ident();
+
+    std::unique_ptr<parameters> formal_params = nullptr;
+    std::unique_ptr<TypeNode>   return_type   = nullptr;
+
     // To see whether FormalParameters follow, we check if an "(" follows
     if (this->if_next(TokenType::lparen))
     {
-        return {std::move(id),formal_parameters()};  //std::make_unique<ProcedureHeadingNode>(start, std::move(id), formal_parameters());
+        formal_params = formal_parameters();
     }
 
-    return {std::move(id), nullptr};
+    // To see whether a ReturnType follows, we check for an ":"
+    if(this->if_next(TokenType::colon)){
+        scanner_.next();
+        return_type = type();
+    }
+
+    return {std::move(id),std::move(formal_params),std::move(return_type)};
+
 }
 
 // ProcedureBodyNode -> declarations ("BEGIN" StatementSequence)? "END" ident
@@ -693,7 +725,7 @@ std::unique_ptr<ProcedureDeclarationNode> Parser::procedure_declaration()
 
     this->expect(TokenType::semicolon);
     auto body = procedure_body();
-    return std::make_unique<ProcedureDeclarationNode>(start, std::move(heading.first), std::move(heading.second), std::move(std::get<0>(body)), std::move(std::get<1>(body)), std::move(std::get<2>(body)));
+    return std::make_unique<ProcedureDeclarationNode>(start, std::move(std::get<0>(heading)), std::move(std::get<1>(heading)), std::move(std::get<0>(body)), std::move(std::get<1>(body)), std::move(std::get<2>(body)),std::move(std::get<2>(heading)));
 }
 
 //  Declarations ->    ("CONST" (ident "=" expression ";")* )?

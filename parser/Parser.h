@@ -30,6 +30,7 @@
 #include "util/datastructures/ast/statements/AssignmentNode.h"
 #include "util/datastructures/ast/statements/IfStatementNode.h"
 #include "util/datastructures/ast/statements/RepeatStatementNode.h"
+#include "util/datastructures/ast/statements/ReturnStatementNode.hpp"
 
 #include "util/datastructures/ast/ModuleNode.h"
 
@@ -66,6 +67,7 @@ private:
     std::unique_ptr<IfStatementNode> if_statement();
     std::unique_ptr<WhileStatementNode> while_statement();
     std::unique_ptr<RepeatStatementNode> repeat_statement();
+    std::unique_ptr<ReturnStatementNode> return_statement();
     std::unique_ptr<StatementNode> statement();
     std::unique_ptr<StatementSequenceNode> statement_sequence();
 
@@ -79,7 +81,7 @@ private:
     std::unique_ptr<fp_section_t> fp_section();
     std::unique_ptr<parameters> formal_parameters();
 
-    std::pair<std::unique_ptr<IdentNode>,std::unique_ptr<parameters>> procedure_heading();
+    std::tuple<std::unique_ptr<IdentNode>,std::unique_ptr<parameters>,std::unique_ptr<TypeNode>> procedure_heading();
     std::tuple<std::unique_ptr<DeclarationsNode>, std::unique_ptr<IdentNode>, std::unique_ptr<StatementSequenceNode>> procedure_body();
     std::unique_ptr<ProcedureDeclarationNode> procedure_declaration();
     std::unique_ptr<DeclarationsNode> declarations();

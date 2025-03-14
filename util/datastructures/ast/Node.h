@@ -31,6 +31,7 @@ enum class NodeType : char {
     procedure_declaration,
     record_type,
     repeat_statement,
+    return_statement,
     selector,
     statement,
     statement_sequence,
@@ -54,8 +55,9 @@ public:
     [[nodiscard]] FilePos pos() const;
 
     virtual void accept(NodeVisitor &visitor) = 0;
+    [[nodiscard]] virtual string to_string() const = 0;
 
-    virtual void print(std::ostream &stream) const = 0;
+    void print(std::ostream &stream) const;
     friend std::ostream& operator<<(std::ostream &stream, const Node &node);
 
 };

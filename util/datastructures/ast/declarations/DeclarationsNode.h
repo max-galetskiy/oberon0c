@@ -38,7 +38,7 @@ class DeclarationsNode : public Node {
         void add_procedure(std::unique_ptr<ProcedureDeclarationNode> procedure){procedure_list.emplace_back(std::move(procedure));};
 
         void accept(NodeVisitor &visitor) override;
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
 
         std::vector<std::pair<IdentNode*, ExpressionNode*>> get_constants();
         std::vector<std::pair<IdentNode*, TypeNode*>> get_typenames();

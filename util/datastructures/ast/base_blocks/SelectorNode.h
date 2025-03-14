@@ -28,7 +28,7 @@ class SelectorNode : public Node {
         void add_index(std::unique_ptr<ExpressionNode> expr);
 
         void accept(NodeVisitor &visitor) override;
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
 
         std::vector<raw_id_indx_tuple>* get_selector();
 

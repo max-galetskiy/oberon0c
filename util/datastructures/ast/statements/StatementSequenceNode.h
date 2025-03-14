@@ -20,7 +20,7 @@ class StatementSequenceNode : public Node{
         StatementSequenceNode(FilePos pos,std::unique_ptr<StatementNode> first_statement);
         void add_statement(std::unique_ptr<StatementNode> statement);
         void accept(NodeVisitor &visitor) override;
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
 
         std::vector<std::unique_ptr<StatementNode>>* get_statements();
 };

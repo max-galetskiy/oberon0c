@@ -11,7 +11,6 @@ void IntNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void IntNode::print(ostream &stream) const
-{
-    stream << value_;
+string IntNode::to_string() const {
+    return std::to_string(value_);
 }

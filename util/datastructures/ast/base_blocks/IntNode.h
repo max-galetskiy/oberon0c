@@ -17,7 +17,7 @@ class IntNode : public ExpressionNode {
         IntNode(FilePos pos, long value) : ExpressionNode(pos, NodeType::integer), value_(value){};
 
         void accept(NodeVisitor &visitor) override;
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
 
         [[nodiscard]] long get_value() const{return value_;}
 

@@ -29,7 +29,7 @@ class ProcedureCallNode : public StatementNode {
 
         explicit ProcedureCallNode(FilePos pos, std::unique_ptr<IdentNode> name, std::unique_ptr<SelectorNode> selector, std::unique_ptr<std::vector<std::unique_ptr<ExpressionNode>>> parameters = nullptr);
         void accept(NodeVisitor &visitor) override;
-        void print(std::ostream &stream) const override;
+        string to_string() const override;
 
         IdentNode* get_ident();
         SelectorNode* get_selector();

@@ -15,7 +15,6 @@ class StatementNode : public Node {
         ~StatementNode();
 
         virtual void accept(NodeVisitor &visitor) = 0;
-        virtual void print(std::ostream &stream) const = 0;
 
 };
 

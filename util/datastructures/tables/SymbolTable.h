@@ -42,7 +42,7 @@ struct IdentInfo
     string name; // Useful since sometimes the name of the identifier may be "lost" along the way, e.g. when tracing
     Kind kind;
     Node *node;
-    std::shared_ptr<TypeInfo> type;
+    std::shared_ptr<TypeInfo> type; // Note: For Procedures we store the return type
 };
 
 class SymbolTable

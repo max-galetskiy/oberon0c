@@ -444,11 +444,13 @@ void CodeGenerator::visit(ProcedureDeclarationNode &node)
 
     auto name = node.get_names().first->get_value();
     auto arguments = node.get_parameters();
+    auto return_type = node.get_return_type_node();
 
     variables_.beginScope();
 
     // Create Signature
     std::vector<Type *> llvm_params;
+    Type* llvm_return_type = builder_->getVoidTy();
 
     if (arguments)
     {
@@ -460,20 +462,6 @@ void CodeGenerator::visit(ProcedureDeclarationNode &node)
             auto typenode = std::get<2>(**itr).get();
             auto llvm_type = create_llvm_type(*typenode);
 
-            // Determine LLVM Type
-            /*if (typenode->getNodeType() == NodeType::array_type || typenode->getNodeType() == NodeType::record_type)
-            {
-                panic("New type defined in declaration of procedure '" + name + "'.");
-            }
-
-            auto type_info = typenode->get_actual_type();
-            if (!type_info)
-            {
-                panic("No type information found for '" + dynamic_cast<IdentNode *>(typenode)->get_value() + "'.");
-            }
-
-            llvm::Type *llvm_type = variables_.lookup_type(type_info->name);
-            */
             if (is_var)
             {
                 llvm_type = llvm_type->getPointerTo();
@@ -486,7 +474,11 @@ void CodeGenerator::visit(ProcedureDeclarationNode &node)
         }
     }
 
-    auto signature = FunctionType::get(builder_->getVoidTy(), llvm_params, false);
+    if(return_type){
+        llvm_return_type = create_llvm_type(*return_type);
+    }
+
+    auto signature = FunctionType::get(llvm_return_type, llvm_params, false);
 
     // Define Function and add it to FunctionList
     auto procedure = module_->getOrInsertFunction(name, signature);
@@ -534,8 +526,10 @@ void CodeGenerator::visit(ProcedureDeclarationNode &node)
 
     variables_.endScope();
 
-    // Add Return
-    builder_->CreateRetVoid();
+    // Add Return in case of void type
+    if(llvm_return_type == builder_->getVoidTy()){
+        builder_->CreateRetVoid();
+    }
     builder_->SetInsertPoint(prev_block);
 }
 
@@ -557,6 +551,9 @@ void CodeGenerator::visit(StatementNode &node)
         break;
     case NodeType::while_statement:
         visit(dynamic_cast<WhileStatementNode &>(node));
+        break;
+    case NodeType::return_statement:
+        visit(dynamic_cast<ReturnStatementNode &>(node));
         break;
     default:
         return;
@@ -795,6 +792,17 @@ void CodeGenerator::visit(WhileStatementNode &node)
 
     // Tail
     builder_->SetInsertPoint(tail);
+}
+
+void CodeGenerator::visit(ReturnStatementNode &node) {
+
+    if(!node.get_value()){
+        builder_->CreateRetVoid();
+    }
+
+    visit(*node.get_value());
+    builder_->CreateRet(value_);
+
 }
 
 void CodeGenerator::visit(ModuleNode &node)

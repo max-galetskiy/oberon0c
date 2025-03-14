@@ -28,7 +28,7 @@ class ExpressionNode : public Node{
     public:
         explicit ExpressionNode(FilePos pos, NodeType type);
         virtual void accept(NodeVisitor &visitor) = 0;
-        virtual void print(std::ostream &stream) const = 0;
+        virtual string to_string() const = 0;
         [[nodiscard]] int get_precedence() const;
 
         void set_value(long value);
@@ -39,9 +39,8 @@ class ExpressionNode : public Node{
         std::shared_ptr<TypeInfo> get_actual_type();
 
         static SourceOperator token_to_op(TokenType);
-        static void print_operator(std::ostream& stream, SourceOperator op);
+        static string print_operator(SourceOperator op);
         static int op_to_precedence(SourceOperator op);
-        friend std::ostream& operator<<(std::ostream &stream, SourceOperator op);
 };
 
 class UnaryExpressionNode : public ExpressionNode{
@@ -53,7 +52,7 @@ class UnaryExpressionNode : public ExpressionNode{
     public:
     UnaryExpressionNode(FilePos pos, std::unique_ptr<ExpressionNode> expr, SourceOperator op);
     void accept(NodeVisitor &visitor) override;
-    void print(std::ostream &stream) const override;
+    [[nodiscard]] string to_string() const override;
     ExpressionNode* get_expr();
     SourceOperator get_op();
 
@@ -74,7 +73,7 @@ class BinaryExpressionNode : public ExpressionNode{
     ExpressionNode* get_lhs();
     SourceOperator get_op();
     void accept(NodeVisitor &visitor) override;
-    void print(std::ostream &stream) const override;
+    [[nodiscard]] string to_string() const override;
 
 };
 
@@ -86,7 +85,7 @@ class IdentSelectorExpressionNode : public ExpressionNode{
     public:
     IdentSelectorExpressionNode(FilePos pos, std::unique_ptr<IdentNode> ident, std::unique_ptr<SelectorNode> selector);
     void accept(NodeVisitor &visitor) override;
-    void print(std::ostream &stream) const override;
+    [[nodiscard]] string to_string() const override;
 
     IdentNode* get_identifier();
     SelectorNode* get_selector();

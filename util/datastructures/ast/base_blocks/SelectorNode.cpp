@@ -13,8 +13,9 @@ void SelectorNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void SelectorNode::print(ostream &stream) const
-{
+string SelectorNode::to_string() const {
+
+    string s;
 
     for (auto itr = selectors.begin(); itr != selectors.end(); itr++)
     {
@@ -23,15 +24,16 @@ void SelectorNode::print(ostream &stream) const
         {
 
             // Array Index
-            stream << "[" << *std::get<2>(*itr) << "]";
+            s += "[" + std::get<2>(*itr)->to_string() + "]";
         }
         else
         {
 
             // Field
-            stream << "." << *std::get<1>(*itr);
+            s += "." + std::get<1>(*itr)->to_string();
         }
     }
+    return s;
 }
 
 void SelectorNode::add_field(std::unique_ptr<IdentNode> ident)
@@ -57,3 +59,5 @@ std::vector<raw_id_indx_tuple> *SelectorNode::get_selector() {
 
     return &selectors_raw;
 }
+
+

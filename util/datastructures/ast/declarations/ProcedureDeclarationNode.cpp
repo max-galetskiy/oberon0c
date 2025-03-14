@@ -16,60 +16,63 @@ void ProcedureDeclarationNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void ProcedureDeclarationNode::print(ostream &stream) const
-{
+string ProcedureDeclarationNode::to_string() const {
 
     // Print Heading
-    stream << "PROCEDURE " << *begin_name_;
+    string s = "PROCEDURE " + begin_name_->to_string();
 
     if (params_)
     {
 
-        stream << "(";
+        s += "(";
 
         // Print all FPSections
         for(auto itr = params_->begin();itr != params_->end(); itr++){
 
             if(itr > params_->begin()){
-                stream << "; ";
+                s += "; ";
             }
 
             // Print Single FPSection
             if(std::get<0>(*(*itr))){
-                stream << "VAR ";
+                s += "VAR ";
             }
 
             // Print all Parameters of FPSection
             for(auto param_list_itr = (*std::get<1>(*(*itr))).begin(); param_list_itr != (*std::get<1>(*(*itr))).end(); param_list_itr++){
 
                 if(param_list_itr > (*std::get<1>(*(*itr))).begin()){
-                    stream << ", ";
+                    s += ", ";
                 }
 
-                stream << *(*param_list_itr);
+                s += (*param_list_itr)->to_string();
 
             }
 
-            stream << " : " << *(std::get<2>(*(*itr)));
-
+            s += " : " + (std::get<2>(*(*itr)))->to_string();
 
         }
 
-        stream << ")";
+        s += ")";
 
     }
 
-    stream << ";\n";
+    if(return_type_node_){
+        s += " : " + return_type_node_->to_string();
+    }
+
+    s += ";\n";
 
     // Print Body
-    stream << *declarations_;
+    s += declarations_->to_string();
 
     if (statements_)
     {
-        stream << "BEGIN\n" << *statements_;
+        s += "BEGIN\n" + statements_->to_string();
     }
 
-    stream << "\nEND " << *end_name_;
+    s += "\nEND " + end_name_->to_string();
+    return s;
 }
 
 std::pair<IdentNode *, IdentNode *> ProcedureDeclarationNode::get_names() const {
@@ -86,6 +89,10 @@ DeclarationsNode *ProcedureDeclarationNode::get_declarations() const {
 
 StatementSequenceNode *ProcedureDeclarationNode::get_statements() const {
     return statements_.get();
+}
+
+TypeNode *ProcedureDeclarationNode::get_return_type_node() const {
+    return return_type_node_.get();
 }
 
 int ProcedureDeclarationNode::get_parameter_number() {
@@ -106,6 +113,19 @@ int ProcedureDeclarationNode::get_parameter_number() {
     return nr;
 }
 
-ProcedureDeclarationNode::ProcedureDeclarationNode(FilePos pos, std::unique_ptr<IdentNode> begin_name,std::unique_ptr<parameters> params,std::unique_ptr<DeclarationsNode> declarations,std::unique_ptr<IdentNode> end_name,std::unique_ptr<StatementSequenceNode> statements)
- : Node(NodeType::procedure_declaration, pos), begin_name_(std::move(begin_name)), params_(std::move(params)), declarations_(std::move(declarations)), statements_(std::move(statements)), end_name_(std::move(end_name)) {}
+void ProcedureDeclarationNode::set_types(TypeInfo *formal, TypeInfo *actual) {
+    formal_return_type_ = formal;
+    actual_return_type_ = actual;
+}
+
+TypeInfo *ProcedureDeclarationNode::get_formal_return_type() const {
+    return formal_return_type_;
+}
+
+TypeInfo *ProcedureDeclarationNode::get_actual_return_type() const {
+    return actual_return_type_;
+}
+
+ProcedureDeclarationNode::ProcedureDeclarationNode(FilePos pos, std::unique_ptr<IdentNode> begin_name,std::unique_ptr<parameters> params,std::unique_ptr<DeclarationsNode> declarations,std::unique_ptr<IdentNode> end_name,std::unique_ptr<StatementSequenceNode> statements,std::unique_ptr<TypeNode> return_type)
+ : Node(NodeType::procedure_declaration, pos), begin_name_(std::move(begin_name)), params_(std::move(params)), declarations_(std::move(declarations)), statements_(std::move(statements)), return_type_node_(std::move(return_type)), end_name_(std::move(end_name)) {}
 

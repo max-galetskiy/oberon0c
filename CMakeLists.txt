@@ -83,6 +83,8 @@ set(PARSER_SOURCES
         util/datastructures/ast/declarations/DeclarationsNode.cpp util/datastructures/ast/declarations/DeclarationsNode.h
 
         util/datastructures/ast/ModuleNode.cpp util/datastructures/ast/ModuleNode.h
+        util/datastructures/ast/statements/ReturnStatementNode.cpp
+        util/datastructures/ast/statements/ReturnStatementNode.hpp
 
 )
 

@@ -12,9 +12,9 @@ void RepeatStatementNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void RepeatStatementNode::print(ostream &stream) const
+string RepeatStatementNode::to_string() const
 {
-    stream << "REPEAT\n" << *statements_ << "\nUNTIL " << *condition_;
+    return "REPEAT\n" + statements_->to_string() + "\nUNTIL " + condition_->to_string();
 }
 
 RepeatStatementNode::RepeatStatementNode(FilePos pos, std::unique_ptr<ExpressionNode> condition, std::unique_ptr<StatementSequenceNode> statements) : StatementNode(NodeType::repeat_statement, pos), condition_(std::move(condition)), statements_(std::move(statements)) {}
@@ -25,4 +25,4 @@ ExpressionNode *RepeatStatementNode::get_expr() {
 
 StatementSequenceNode *RepeatStatementNode::get_statements() {
     return statements_.get();
-};
+}

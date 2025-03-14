@@ -24,7 +24,7 @@ public:
     explicit ArrayTypeNode(FilePos pos, std::unique_ptr<ExpressionNode> dim, std::unique_ptr<TypeNode> type) : TypeNode(NodeType::array_type, pos), dim_(std::move(dim)), type_(std::move(type)) {};
 
     void accept(NodeVisitor &visitor) override;
-    void print(std::ostream &stream) const override;
+    string to_string() const override;
 
     ExpressionNode *get_dim_node();
     TypeNode *get_type_node();

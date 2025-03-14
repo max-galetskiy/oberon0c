@@ -21,7 +21,7 @@ public:
     IdentNode(FilePos pos, const string name) : TypeNode(NodeType::ident, pos), name_(name) {};
 
     void accept(NodeVisitor &visitor) override;
-    void print(std::ostream &stream) const override;
+    string to_string() const override;
 
     string get_value();
 

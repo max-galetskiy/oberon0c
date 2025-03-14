@@ -11,16 +11,16 @@ void RecordTypeNode::accept(NodeVisitor &visitor)
     visitor.visit(*this);
 }
 
-void RecordTypeNode::print(ostream &stream) const
-{
-    stream << "RECORD ";
+string RecordTypeNode::to_string() const {
+
+    string s = "RECORD ";
 
     for (auto itr = fields_.begin(); itr != fields_.end(); itr++)
     {
 
         if (itr > fields_.begin())
         {
-            stream << "; ";
+            s += "; ";
         }
 
         // Print single Field List
@@ -28,18 +28,19 @@ void RecordTypeNode::print(ostream &stream) const
         for(auto field_itr = curr_field_list->begin(); field_itr != curr_field_list->end(); field_itr++){
 
             if(field_itr > curr_field_list->begin()){
-                stream << ", ";
+                s += ", ";
             }
 
-            stream << *(*field_itr);
+            s += (*field_itr)->to_string();
 
         }
 
-        stream << " : " << *(itr->get()->second);
+        s += " : " + (itr->get()->second)->to_string();
 
     }
 
-    stream << " END\n";
+    s += " END\n";
+    return s;
 }
 
 RecordTypeNode::RecordTypeNode(FilePos pos, std::unique_ptr<field > first_field) : TypeNode(NodeType::record_type, pos) { add_field_list(std::move(first_field)); }
