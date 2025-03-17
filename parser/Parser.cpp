@@ -166,7 +166,7 @@ std::unique_ptr<SelectorNode> Parser::selector()
     return selector;
 }
 
-// factor -> ident selector | number | "(" expression ")" | "~" factor
+// factor -> ident selector (ActualParameters)? | number | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
 std::unique_ptr<ExpressionNode> Parser::factor()
 {
     logger_.debug("Factor");
@@ -174,9 +174,21 @@ std::unique_ptr<ExpressionNode> Parser::factor()
 
     if (this->if_next(TokenType::const_ident))
     {
+
         auto id = ident();
         auto sel = selector();
-        return std::make_unique<IdentSelectorExpressionNode>(start, std::move(id), std::move(sel));
+
+        // Now we need to decide whether this refers to an IdentSelectorExpression or to a ProcedureCall
+
+        // Procedure Call (and the reason why we don't allow omitting the parentheses
+        if(if_next(TokenType::lparen)){
+            auto proc_call = std::make_unique<ProcedureCallNode>(start,std::move(id),std::move(sel),actual_parameters());
+            return std::make_unique<ProcedureCallExpressionNode>(start,std::move(proc_call));
+        }
+        else{
+            return std::make_unique<IdentSelectorExpressionNode>(start, std::move(id), std::move(sel));
+        }
+
     }
     else if (this->if_next(TokenType::lparen))
     {

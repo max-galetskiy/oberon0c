@@ -10,6 +10,7 @@
 #include "util/datastructures/ast/Node.h"
 #include "scanner/Token.h"
 #include "util/datastructures/ast/declarations/TypeNode.h"
+#include "util/datastructures/ast/statements/ProcedureCallNode.h"
 #include "util/datastructures/tables/ScopeTable.h"
 
 enum SourceOperator {PLUS, MINUS, OR, MULT, DIV, MOD, AND, NEG, NOT, EQ, NEQ, LT, LEQ, GT, GEQ, NO_OPERATOR, PAREN};   // For pretty printing (and possibly precedence) purposes, we consider Parentheses an operator too
@@ -58,7 +59,6 @@ class UnaryExpressionNode : public ExpressionNode{
 
 };
 
-
 class BinaryExpressionNode : public ExpressionNode{
 
     private:
@@ -92,5 +92,16 @@ class IdentSelectorExpressionNode : public ExpressionNode{
 
 };
 
+// To avoid the pitfalls of multiple inheritance, we basically build a wrapper over a ProcedureCallNode here
+class ProcedureCallExpressionNode : public ExpressionNode{
+    private:
+    std::unique_ptr<ProcedureCallNode> call_;
+    public:
+    ProcedureCallExpressionNode(FilePos pos, std::unique_ptr<ProcedureCallNode> call);
+    void accept(NodeVisitor &visitor) override;
+    [[nodiscard]] string to_string() const override;
+
+    ProcedureCallNode* get_call();
+};
 
 #endif //OBERON0C_EXPRESSIONNODE_H

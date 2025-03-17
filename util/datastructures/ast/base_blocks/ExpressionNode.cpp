@@ -247,3 +247,17 @@ string IdentSelectorExpressionNode::to_string() const {
     return ident_->to_string() + selector_->to_string();
 
 }
+
+ProcedureCallExpressionNode::ProcedureCallExpressionNode(FilePos pos, std::unique_ptr<ProcedureCallNode> call) : ExpressionNode(pos, NodeType::procedure_call), call_(std::move(call)){}
+
+void ProcedureCallExpressionNode::accept(NodeVisitor &visitor) {
+    visitor.visit(*call_);
+}
+
+string ProcedureCallExpressionNode::to_string() const {
+    return call_->to_string();
+}
+
+ProcedureCallNode *ProcedureCallExpressionNode::get_call() {
+    return call_.get();
+}

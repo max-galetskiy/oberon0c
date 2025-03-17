@@ -48,8 +48,6 @@ private:
     std::unique_ptr<const Token> expect_many(std::vector<TokenType>);
     bool if_next(TokenType);
 
-    FilePos pos();
-
     std::unique_ptr<IdentNode> ident();
     std::unique_ptr<IntNode> integer();
     std::unique_ptr<SelectorNode> selector();

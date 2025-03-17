@@ -78,6 +78,10 @@ void CodeGenerator::visit(ExpressionNode &node)
     case NodeType::integer:
         visit(dynamic_cast<IntNode &>(node));
         break;
+    case NodeType::procedure_call:
+        assert(dynamic_cast<ProcedureCallExpressionNode&>(node).get_call());
+        visit(*dynamic_cast<ProcedureCallExpressionNode&>(node).get_call());
+        break;
     default:
         panic("unreachable");
     }
@@ -726,7 +730,7 @@ void CodeGenerator::visit(ProcedureCallNode &node)
     }
 
     // Create Call
-    builder_->CreateCall(procedures_[procedure_name], arguments);
+    value_ = builder_->CreateCall(procedures_[procedure_name], arguments);
 }
 
 void CodeGenerator::visit(RepeatStatementNode &node)

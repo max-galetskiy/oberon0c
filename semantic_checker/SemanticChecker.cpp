@@ -142,6 +142,22 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
         expr.set_types(id_selector_type, trace_type(id_selector_type));
         return id_selector_type;
     }
+    else if (type == NodeType::procedure_call){
+        auto p_call_node = &dynamic_cast<ProcedureCallExpressionNode &>(expr);
+
+        // Validate procedure call
+        visit(*p_call_node->get_call());
+
+        auto procedure_name = p_call_node->get_call()->get_name();
+        auto procedure_info = scope_table_.lookup(procedure_name);
+
+        if(!procedure_info){
+            return error_type;
+        }
+
+        return procedure_info->type;
+
+    }
     else if (type == NodeType::integer)
     {
         expr.set_types(integer_type, integer_type);
@@ -268,6 +284,9 @@ std::optional<long> SemanticChecker::evaluate_expression(ExpressionNode &expr, b
 
         auto constant_expr = dynamic_cast<const ExpressionNode *>(id_info->node);
         return evaluate_expression(const_cast<ExpressionNode &>(*constant_expr), suppress_errors);
+    }
+    else if (type == NodeType::procedure_call){
+        return std::nullopt;
     }
     else if (type == NodeType::integer)
     {

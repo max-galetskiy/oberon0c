@@ -1,13 +1,13 @@
 MODULE Square;
 VAR
-  num: INTEGER;
+  num, result: INTEGER;
 
-PROCEDURE CalcSquare(VAR x: INTEGER) : INTEGER;
+PROCEDURE CalcSquare(x: INTEGER) : INTEGER;
 BEGIN
   RETURN x * x
 END CalcSquare;
 
 BEGIN
   num := 4;
-  CalcSquare(num)
+  result := CalcSquare(num) * CalcSquare(num)
 END Square.
