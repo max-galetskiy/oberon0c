@@ -341,18 +341,19 @@ std::shared_ptr<TypeInfo> SemanticChecker::trace_type(std::shared_ptr<TypeInfo> 
     }
 
     auto current_type = initial_type;
-    IdentInfo *curr_info;
 
-    while ((curr_info = scope_table_.lookup(initial_type->name)) && (current_type->tag == ALIAS))
+    while (current_type->tag == ALIAS)
     {
 
-        // Easy exit should this function be called with an erroneous type (which happens for semantically incorrect programs)
-        if (curr_info->kind != Kind::TYPENAME)
+        auto aliased_name = get<AliasTypeInfo>(current_type->extended_info.value()).aliased_type;
+        current_type = scope_table_.lookup_type(aliased_name);
+
+        // Easy exit should this function be called with an erroneous type (which may happen for semantically incorrect programs)
+        if (!current_type)
         {
             return error_type;
         }
 
-        current_type = curr_info->type;
     }
 
     return current_type;
