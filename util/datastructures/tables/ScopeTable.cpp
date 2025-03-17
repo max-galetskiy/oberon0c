@@ -24,7 +24,6 @@ IdentInfo *ScopeTable::lookup(const string &name, bool only_current)
     if (only_current)
     {
         assert(current_scope >= 0);
-
         return scopes_[static_cast<size_t>(current_scope)]->lookup(name);
     }
 
@@ -105,6 +104,21 @@ std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::
 
 std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::map<string, std::shared_ptr<TypeInfo>> fields) {
     return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,std::move(fields));
+}
+
+bool ScopeTable::lookup_name(const string &name, bool only_current) {
+
+    if(only_current){
+        return scopes_[static_cast<size_t>(current_scope)]->lookup_name(name);
+    }
+
+    for(int i = current_scope; i >= 0; i--){
+        if(scopes_[static_cast<size_t>(i)]->lookup_name(name)){
+            return true;
+        }
+    };
+
+    return false;
 }
 
 

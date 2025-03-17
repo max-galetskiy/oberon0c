@@ -94,3 +94,8 @@ std::shared_ptr<TypeInfo> SymbolTable::lookup_type(const string &name) {
 
     return nullptr;
 }
+
+// Looks if a name either exists in "identifiers" or in "types"
+bool SymbolTable::lookup_name(const string &name) {
+    return identifiers_.contains(name) || types_.contains(name);
+}

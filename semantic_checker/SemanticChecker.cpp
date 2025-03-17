@@ -242,7 +242,7 @@ std::optional<long> SemanticChecker::evaluate_expression(ExpressionNode &expr, b
         {
             if (!suppress_errors)
             {
-                logger_.error(expr.pos(), "Use of unknown identifier: '" + id_sel_expr->get_identifier()->get_value() + "'.");
+                report_unknown_identifier(expr.pos(),id_sel_expr->get_identifier()->get_value());
             }
             return std::nullopt;
         }
@@ -292,7 +292,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_type(IdentSelectorExpr
     auto identifier_info = scope_table_.lookup(identifier->get_value());
     if (!identifier_info)
     {
-        logger_.error(id_expr.pos(), "Unknown Identifier: " + identifier->get_value());
+        report_unknown_identifier(id_expr.pos(),identifier->get_value());
         return error_type;
     }
     id_expr.get_identifier()->set_types(identifier_info->type, trace_type(identifier_info->type));
@@ -352,7 +352,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident
 {
     IdentInfo *prev_info = scope_table_.lookup(ident.get_value());
     if(!prev_info){
-        logger_.error(ident.pos(),"Unknown identifier: " + ident.get_value());
+        report_unknown_identifier(ident.pos(),ident.get_value());
         return error_type;
     }
 
@@ -660,7 +660,7 @@ void SemanticChecker::visit(DeclarationsNode &declars)
     {
 
         // check for double declarations (only in current scope)
-        if (scope_table_.lookup(itr->first->get_value(), true))
+        if (scope_table_.lookup_name(itr->first->get_value(), true))
         {
             logger_.error(declars.pos(), "Multiple declarations of identifier '" + itr->first->get_value() + "'.");
         }
@@ -730,7 +730,7 @@ void SemanticChecker::visit(DeclarationsNode &declars)
         {
 
             // check for double declarations (only in current scope)
-            if (scope_table_.lookup((*el)->get_value(), true))
+            if (scope_table_.lookup_name((*el)->get_value(), true))
             {
                 logger_.error(declars.pos(), "Multiple Declarations of identifier '" + (*el)->get_value() + "'.");
             }
@@ -832,7 +832,7 @@ void SemanticChecker::visit(AssignmentNode &node)
 
     if (!lhs_id_info)
     {
-        logger_.error(node.pos(), "Use of unknown identifier: '" + lhs_id + "'.");
+        report_unknown_identifier(node.pos(),lhs_id);
         return;
     }
 
@@ -1095,6 +1095,14 @@ void SemanticChecker::visit(RecordTypeNode &node){(void)node;}
 void SemanticChecker::validate_program(ModuleNode &node)
 {
     visit(node);
+}
+
+void SemanticChecker::report_unknown_identifier(FilePos pos, string id_name) {
+    if(scope_table_.lookup_type(id_name)){
+        logger_.error(pos,"Identifier '" + id_name+ "' refers to a type and not to a variable.");
+    }else{
+        logger_.error(pos, "Use of unknown identifier: '" + id_name + "'.");
+    }
 }
 
 

@@ -28,6 +28,8 @@ class SemanticChecker : NodeVisitor {
         inline static std::shared_ptr<TypeInfo> boolean_type = std::make_shared<TypeInfo>(bool_string,BOOLEAN);
         inline static std::shared_ptr<TypeInfo> integer_type = std::make_shared<TypeInfo>(int_string,INTEGER);
 
+        void report_unknown_identifier(FilePos pos, string id_name);
+
     public:
         explicit SemanticChecker(Logger& logger);
 

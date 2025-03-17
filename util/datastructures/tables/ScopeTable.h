@@ -25,6 +25,7 @@ public:
     void beginScope();
     void endScope();
 
+    bool lookup_name(const string& name, bool only_current = false);
     IdentInfo *lookup(const string &name, bool only_current = false);
     std::optional<std::map<string, std::shared_ptr<TypeInfo>>> lookup_record(const string &record_name);
     std::shared_ptr<TypeInfo> lookup_field(const string &record_name, const string &field_name);
