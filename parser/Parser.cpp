@@ -166,13 +166,13 @@ std::unique_ptr<SelectorNode> Parser::selector()
     return selector;
 }
 
-// factor -> ident selector (ActualParameters)? | number | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
+// factor -> ident selector (ActualParameters)? | number | "TRUE" | "FALSE" | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
 std::unique_ptr<ExpressionNode> Parser::factor()
 {
     logger_.debug("Factor");
     auto start = scanner_.peek()->start();
 
-    if (this->if_next(TokenType::const_ident))
+    if (if_next(TokenType::const_ident))
     {
 
         auto id = ident();
@@ -190,17 +190,22 @@ std::unique_ptr<ExpressionNode> Parser::factor()
         }
 
     }
-    else if (this->if_next(TokenType::lparen))
+    else if (if_next(TokenType::lparen))
     {
         scanner_.next();
         auto expr = expression();
         this->expect(TokenType::rparen);
         return std::make_unique<UnaryExpressionNode>(expr->pos(), std::move(expr), SourceOperator::PAREN);
     }
-    else if (this->if_next(TokenType::op_not))
+    else if (if_next(TokenType::op_not))
     {
         auto factor_token = scanner_.next();
         return std::make_unique<UnaryExpressionNode>(factor_token->start(), factor(), SourceOperator::NOT);
+    }
+    else if(if_next(TokenType::boolean_literal)){
+        auto bool_token = scanner_.next();
+        bool bool_value = dynamic_cast<const BooleanLiteralToken *>(bool_token.get())->value();;
+        return std::make_unique<BoolNode>(bool_token->start(),bool_value);
     }
     else
     {

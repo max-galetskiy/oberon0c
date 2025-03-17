@@ -163,6 +163,10 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
         expr.set_types(integer_type, integer_type);
         return integer_type;
     }
+    else if(type == NodeType::boolean){
+        expr.set_types(boolean_type,boolean_type);
+        return boolean_type;
+    }
     else
     {
         logger_.error(expr.pos(), "Invalid or empty expression.");
@@ -173,7 +177,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
     return error_type;
 }
 
-// Checks if expression is constant and if so evaluates it (returns nullopt in cases where errors occur)
+// Checks if expression is a constant number and if so evaluates it (returns nullopt in cases where errors occur)
 std::optional<long> SemanticChecker::evaluate_expression(ExpressionNode &expr, bool suppress_errors)
 {
 
@@ -292,6 +296,9 @@ std::optional<long> SemanticChecker::evaluate_expression(ExpressionNode &expr, b
     {
         auto integer_node = &dynamic_cast<IntNode &>(expr);
         return integer_node->get_value();
+    }
+    else if (type == NodeType::boolean){
+        return std::nullopt; // For now, we only evaluate constant expressions of type integer
     }
 
     if (!suppress_errors)
@@ -1101,6 +1108,7 @@ void SemanticChecker::visit(ProcedureCallNode &node)
 }
 
 // Left empty, but needed to implement NodeVisitor
+void SemanticChecker::visit(BoolNode &node) {(void)node;}
 void SemanticChecker::visit(IntNode &node) { (void)node; }
 void SemanticChecker::visit(ExpressionNode &node) { (void)node; }
 void SemanticChecker::visit(UnaryExpressionNode &node) { (void)node; }
@@ -1124,5 +1132,7 @@ void SemanticChecker::report_unknown_identifier(FilePos pos, string id_name) {
         logger_.error(pos, "Use of unknown identifier: '" + id_name + "'.");
     }
 }
+
+
 
 

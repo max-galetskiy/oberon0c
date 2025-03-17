@@ -12,7 +12,7 @@
 #include "util/datastructures/ast/Node.h"
 
 #include "util/datastructures/ast/base_blocks/IdentNode.h"
-#include "util/datastructures/ast/base_blocks/IntNode.h"
+#include "util/datastructures/ast/base_blocks/LiteralNodes.h"
 #include "util/datastructures/ast/base_blocks/SelectorNode.h"
 
 #include "util/datastructures/ast/base_blocks/ExpressionNode.h"

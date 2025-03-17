@@ -26,6 +26,8 @@ enum class NodeType : char {
     ident,
     if_statement,
     integer,
+    boolean,
+    real,
     module,
     procedure_call,
     procedure_declaration,
@@ -33,7 +35,6 @@ enum class NodeType : char {
     repeat_statement,
     return_statement,
     selector,
-    statement,
     statement_sequence,
     type,
     while_statement

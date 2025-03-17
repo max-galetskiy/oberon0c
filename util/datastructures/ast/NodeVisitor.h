@@ -9,7 +9,7 @@
 
 #include "util/datastructures/ast/base_blocks/ExpressionNode.h"
 #include "util/datastructures/ast/base_blocks/IdentNode.h"
-#include "util/datastructures/ast/base_blocks/IntNode.h"
+#include "util/datastructures/ast/base_blocks/LiteralNodes.h"
 #include "util/datastructures/ast/base_blocks/SelectorNode.h"
 
 #include "util/datastructures/ast/declarations/ArrayTypeNode.h"
@@ -40,6 +40,7 @@ public:
 
     virtual void visit(IdentNode&) = 0;
     virtual void visit(IntNode&) = 0;
+    virtual void visit(BoolNode&) = 0;
     virtual void visit(SelectorNode&) = 0;
 
     virtual void visit(TypeNode&) = 0;

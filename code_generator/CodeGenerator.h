@@ -71,6 +71,7 @@ public:
 
     void visit(IdentNode &) override;
     void visit(IntNode &) override;
+    void visit(BoolNode &) override;
     void visit(SelectorNode &) override;
 
     llvm::Type* create_llvm_type(TypeNode&);

@@ -64,7 +64,7 @@ set(PARSER_SOURCES
         util/datastructures/ast/Node.cpp util/datastructures/ast/Node.h
         util/datastructures/ast/NodeVisitor.cpp util/datastructures/ast/NodeVisitor.h
         util/datastructures/ast/base_blocks/IdentNode.cpp util/datastructures/ast/base_blocks/IdentNode.h
-        util/datastructures/ast/base_blocks/IntNode.cpp util/datastructures/ast/base_blocks/IntNode.h
+        util/datastructures/ast/base_blocks/LiteralNodes.cpp util/datastructures/ast/base_blocks/LiteralNodes.h
         util/datastructures/ast/base_blocks/SelectorNode.cpp util/datastructures/ast/base_blocks/SelectorNode.h
         util/datastructures/ast/base_blocks/ExpressionNode.cpp util/datastructures/ast/base_blocks/ExpressionNode.h
 

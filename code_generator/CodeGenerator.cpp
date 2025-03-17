@@ -78,6 +78,9 @@ void CodeGenerator::visit(ExpressionNode &node)
     case NodeType::integer:
         visit(dynamic_cast<IntNode &>(node));
         break;
+    case NodeType::boolean:
+        visit(dynamic_cast<BoolNode&>(node));
+        break;
     case NodeType::procedure_call:
         assert(dynamic_cast<ProcedureCallExpressionNode&>(node).get_call());
         visit(*dynamic_cast<ProcedureCallExpressionNode&>(node).get_call());
@@ -322,6 +325,12 @@ void CodeGenerator::visit(IntNode &val)
     llvm::Type *longType = llvm::Type::getInt64Ty(ctx_);
     auto *longValue = llvm::ConstantInt::get(longType, static_cast<long unsigned int>(int_val));
     value_ = longValue;
+}
+
+void CodeGenerator::visit(BoolNode &val) {
+    bool value = val.get_value();
+    auto bool_type = llvm::Type::getInt1Ty(ctx_);
+    value_ = llvm::ConstantInt::get(bool_type, static_cast<long unsigned int>(value));
 }
 
 void CodeGenerator::visit(SelectorNode &)
