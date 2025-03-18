@@ -71,6 +71,7 @@ public:
 
     void visit(IdentNode &) override;
     void visit(IntNode &) override;
+    void visit(FloatNode &) override;
     void visit(BoolNode &) override;
     void visit(SelectorNode &) override;
 

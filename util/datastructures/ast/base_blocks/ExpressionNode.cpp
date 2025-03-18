@@ -28,7 +28,9 @@ SourceOperator ExpressionNode::token_to_op(TokenType t)
     case TokenType::op_times:
         return SourceOperator::MULT;
     case TokenType::op_div:
-        return SourceOperator::DIV;
+         return SourceOperator::DIV;
+    case TokenType::op_divide:
+         return SourceOperator::FLOAT_DIV;
     case TokenType::op_mod:
         return SourceOperator::MOD;
     case TokenType::op_and:
@@ -67,6 +69,8 @@ string ExpressionNode::print_operator(SourceOperator op)
         return "*";
     case DIV:
         return "DIV";
+    case FLOAT_DIV:
+        return "/";
     case MOD:
         return "MOD";
     case AND:
@@ -113,6 +117,7 @@ int ExpressionNode::op_to_precedence(SourceOperator op)
     // Precedence of 2 --> Factor Operators like *,DIV,MOD,...
     case MULT:
     case DIV:
+    case FLOAT_DIV:
     case MOD:
     case AND:
         return 2;

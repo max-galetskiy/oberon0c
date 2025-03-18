@@ -13,7 +13,7 @@
 #include "util/datastructures/ast/statements/ProcedureCallNode.h"
 #include "util/datastructures/tables/ScopeTable.h"
 
-enum SourceOperator {PLUS, MINUS, OR, MULT, DIV, MOD, AND, NEG, NOT, EQ, NEQ, LT, LEQ, GT, GEQ, NO_OPERATOR, PAREN};   // For pretty printing (and possibly precedence) purposes, we consider Parentheses an operator too
+enum SourceOperator {PLUS, MINUS, OR, MULT, DIV, FLOAT_DIV, MOD, AND, NEG, NOT, EQ, NEQ, LT, LEQ, GT, GEQ, NO_OPERATOR, PAREN};   // For pretty printing (and possibly precedence) purposes, we consider Parentheses an operator too
 
 class IdentNode;
 class SelectorNode;

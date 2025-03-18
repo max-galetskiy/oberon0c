@@ -36,5 +36,18 @@ class BoolNode : public ExpressionNode {
 
 };
 
+class FloatNode : public ExpressionNode{
+
+    private:
+        double value_;  // kind of goes against the name, I know
+    public:
+
+    FloatNode(FilePos pos, double value) : ExpressionNode(pos,NodeType::real), value_(value){};
+
+    void accept(NodeVisitor &visitor) override;
+    [[nodiscard]] string to_string() const override;
+    [[nodiscard]] double get_value() const{return value_;}
+
+};
 
 #endif //OBERON0C_LITERALNODES_H

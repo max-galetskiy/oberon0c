@@ -122,10 +122,15 @@ std::unique_ptr<IntNode> Parser::integer()
     return std::make_unique<IntNode>(token->start(), int_value);
 }
 
-// number -> integer
-std::unique_ptr<IntNode> Parser::number()
-{
-    return integer();
+// real/float (already recognized by the scanner in ful
+std::unique_ptr<FloatNode> Parser::real() {
+    auto token = this->expect(TokenType::float_literal);
+    if(!token){
+        return nullptr;
+    }
+
+    double float_value = dynamic_cast<const FloatLiteralToken *>(token.get())->value();
+    return std::make_unique<FloatNode>(token->start(),float_value);
 }
 
 // selector -> ("." ident | "[" expression "]" )*
@@ -166,7 +171,7 @@ std::unique_ptr<SelectorNode> Parser::selector()
     return selector;
 }
 
-// factor -> ident selector (ActualParameters)? | number | "TRUE" | "FALSE" | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
+// factor -> ident selector (ActualParameters)? | number | real | "TRUE" | "FALSE" | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
 std::unique_ptr<ExpressionNode> Parser::factor()
 {
     logger_.debug("Factor");
@@ -207,13 +212,16 @@ std::unique_ptr<ExpressionNode> Parser::factor()
         bool bool_value = dynamic_cast<const BooleanLiteralToken *>(bool_token.get())->value();;
         return std::make_unique<BoolNode>(bool_token->start(),bool_value);
     }
-    else
-    {
-        return number();
+    else if(if_next(TokenType::float_literal)){
+        return real();
     }
+    else {
+        return integer();
+    }
+
 }
 
-// term -> factor (("*" | "DIV" | "MOD" | "&") factor)*
+// term -> factor (("*" | "/" | "DIV" | "MOD" | "&") factor)*
 std::unique_ptr<ExpressionNode> Parser::term()
 {
     logger_.debug("Term");
@@ -226,7 +234,7 @@ std::unique_ptr<ExpressionNode> Parser::term()
     BinaryExpressionNode* curr_expr = nullptr;
 
     while (token_type == TokenType::op_times || token_type == TokenType::op_div ||
-           token_type == TokenType::op_mod || token_type == TokenType::op_and)
+           token_type == TokenType::op_mod || token_type == TokenType::op_and || token_type == TokenType::op_divide)
     {
 
         SourceOperator op = ExpressionNode::token_to_op(token_type);

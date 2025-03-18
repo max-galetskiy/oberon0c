@@ -22,3 +22,11 @@ void BoolNode::accept(NodeVisitor &visitor) {
 string BoolNode::to_string() const {
     return (value_)? "TRUE" : "FALSE";
 }
+
+void FloatNode::accept(NodeVisitor &visitor) {
+    visitor.visit(*this);
+}
+
+string FloatNode::to_string() const {
+    return std::to_string(value_);
+}

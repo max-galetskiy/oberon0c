@@ -24,9 +24,11 @@ class SemanticChecker : NodeVisitor {
 
         inline static const string int_string = "INTEGER";
         inline static const string bool_string = "BOOLEAN";
+        inline static const string float_string = "REAL";
         inline static std::shared_ptr<TypeInfo> error_type = std::make_shared<TypeInfo>("<ERROR_TYPE>",ERROR_TAG);
         inline static std::shared_ptr<TypeInfo> boolean_type = std::make_shared<TypeInfo>(bool_string,BOOLEAN);
         inline static std::shared_ptr<TypeInfo> integer_type = std::make_shared<TypeInfo>(int_string,INTEGER);
+        inline static std::shared_ptr<TypeInfo> float_type   = std::make_shared<TypeInfo>(float_string, FLOAT);
 
         void report_unknown_identifier(FilePos pos, string id_name);
 
@@ -36,6 +38,7 @@ class SemanticChecker : NodeVisitor {
         // Base Blocks/Empty Definitions
         void visit(IntNode&) override;
         void visit(BoolNode&) override;
+        void visit(FloatNode&) override;
         void visit(ExpressionNode&) override;
         void visit(UnaryExpressionNode&) override;
         void visit(BinaryExpressionNode&) override;

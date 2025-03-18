@@ -58,25 +58,66 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
             return boolean_type;
         }
 
-        // Arithmetic Operators
+        // Arithmetic Operators (which apply to both integers and floats)
         else if (op == SourceOperator::PLUS || op == SourceOperator::MINUS ||
-                 op == SourceOperator::MULT || op == SourceOperator::DIV ||
-                 op == SourceOperator::MOD)
+                 op == SourceOperator::MULT)
         {
 
-            if (trace_type(checkType(*lhs))->tag != INTEGER)
+            auto lhs_type = trace_type(checkType(*lhs));
+            auto rhs_type = trace_type(checkType(*rhs));
+
+            if (lhs_type->tag != INTEGER && lhs_type->tag != FLOAT)
             {
-                logger_.error(expr.pos(), "LHS of arithmetic expression is not of type INTEGER.");
+                logger_.error(expr.pos(), "LHS of arithmetic expression does not have a numeric type (i.e. INTEGER or REAL).");
                 return error_type;
             }
-            if (trace_type(checkType(*rhs))->tag != INTEGER)
+            if (rhs_type->tag != INTEGER && rhs_type->tag != FLOAT)
             {
-                logger_.error(expr.pos(), "RHS of arithmetic expression is not of type INTEGER.");
+                logger_.error(expr.pos(), "RHS of arithmetic expression does not have a numeric type (i.e. INTEGER or REAL).");
+                return error_type;
+            }
+            if(*lhs_type != *rhs_type){
+                logger_.error(expr.pos(), "LHS and RHS have non-matching types (" + lhs_type->name + " and " + rhs_type->name + "). Note that Oberon does not support implicit casting.");
+            }
+
+            expr.set_types(lhs_type, lhs_type);
+            return lhs_type;
+        }
+
+        // Integer exclusive
+        else if(op == SourceOperator::MOD || op == SourceOperator::DIV){
+            auto lhs_type = trace_type(checkType(*lhs));
+            auto rhs_type = trace_type(checkType(*rhs));
+
+            if(lhs_type->tag != INTEGER){
+                logger_.error(expr.pos(), "Expected 'INTEGER' but got '" + lhs_type->name + "'.");
+                return error_type;
+            }
+            if(rhs_type->tag != INTEGER){
+                logger_.error(expr.pos(), "Expected 'INTEGER' but got '" + lhs_type->name + "'.");
                 return error_type;
             }
 
-            expr.set_types(integer_type, integer_type);
+            expr.set_types(integer_type,integer_type);
             return integer_type;
+        }
+
+        // Floating Point division
+        else if(op == SourceOperator::FLOAT_DIV){
+            auto lhs_type = trace_type(checkType(*lhs));
+            auto rhs_type = trace_type(checkType(*rhs));
+
+            if(lhs_type->tag != FLOAT){
+                logger_.error(expr.pos(), "Expected 'REAL' but got '" + lhs_type->name + "'.");
+                return error_type;
+            }
+            if(rhs_type->tag != FLOAT){
+                logger_.error(expr.pos(), "Expected 'REAL' but got '" + lhs_type->name + "'.");
+                return error_type;
+            }
+
+            expr.set_types(float_type,float_type);
+            return float_type;
         }
 
         // Boolean Operators
@@ -119,13 +160,14 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
         }
         else if (op == SourceOperator::NEG)
         {
-            if (trace_type(checkType(*inner))->tag != INTEGER)
+            auto inner_type = trace_type(checkType(*inner));
+            if (inner_type->tag != INTEGER && inner_type->tag != FLOAT)
             {
-                logger_.error(expr.pos(), "Expression is not of type INTEGER.");
+                logger_.error(expr.pos(), "Expression is not of numeric type (i.e. INTEGER, REAL).");
                 return error_type;
             }
-            expr.set_types(boolean_type, boolean_type);
-            return integer_type;
+            expr.set_types(inner_type, inner_type);
+            return inner_type;
         }
         else if (op == SourceOperator::NO_OPERATOR || op == SourceOperator::PAREN)
         {
@@ -166,6 +208,10 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
     else if(type == NodeType::boolean){
         expr.set_types(boolean_type,boolean_type);
         return boolean_type;
+    }
+    else if(type == NodeType::real){
+        expr.set_types(float_type,float_type);
+        return float_type;
     }
     else
     {
@@ -299,6 +345,9 @@ std::optional<long> SemanticChecker::evaluate_expression(ExpressionNode &expr, b
     }
     else if (type == NodeType::boolean){
         return std::nullopt; // For now, we only evaluate constant expressions of type integer
+    }
+    else if(type == NodeType::real){
+        return std::nullopt;
     }
 
     if (!suppress_errors)
@@ -438,6 +487,12 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident
             {
                 prev_type = scope_table_.lookup_type(int_string);
             }
+            else if(elem_type->tag == BOOLEAN){
+                prev_type = scope_table_.lookup_type(bool_string);
+            }
+            else if(elem_type->tag == FLOAT){
+                prev_type = scope_table_.lookup_type(float_string);
+            }
             else if (elem_type->tag == ALIAS)
             {
                 prev_type = scope_table_.lookup_type(elem_type->name);
@@ -569,9 +624,10 @@ void SemanticChecker::visit(ModuleNode &module)
 
     scope_table_.beginScope();
 
-    // Insert pre-defined types "INTEGER" and "BOOLEAN"
+    // Insert pre-defined types
     scope_table_.insert_type(int_string,INTEGER);
     scope_table_.insert_type(bool_string,BOOLEAN);
+    scope_table_.insert_type(float_string,FLOAT);
 
     auto names = module.get_name();
 
@@ -1109,6 +1165,7 @@ void SemanticChecker::visit(ProcedureCallNode &node)
 
 // Left empty, but needed to implement NodeVisitor
 void SemanticChecker::visit(BoolNode &node) {(void)node;}
+void SemanticChecker::visit(FloatNode &node) {(void)node;}
 void SemanticChecker::visit(IntNode &node) { (void)node; }
 void SemanticChecker::visit(ExpressionNode &node) { (void)node; }
 void SemanticChecker::visit(UnaryExpressionNode &node) { (void)node; }
@@ -1132,6 +1189,7 @@ void SemanticChecker::report_unknown_identifier(FilePos pos, string id_name) {
         logger_.error(pos, "Use of unknown identifier: '" + id_name + "'.");
     }
 }
+
 
 
 

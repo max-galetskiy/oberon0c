@@ -154,6 +154,10 @@ void CodeGenerator::visit(BinaryExpressionNode &expr)
         value_ = builder_->CreateSRem(lhsValue, rhsValue, "mod");
         break;
 
+    case SourceOperator::FLOAT_DIV:
+        value_ = builder_->CreateFDiv(lhsValue,rhsValue, "float_div");
+        break;
+
     // Note: Boolean operators already handled
 
     // Relational operator
@@ -331,6 +335,12 @@ void CodeGenerator::visit(BoolNode &val) {
     bool value = val.get_value();
     auto bool_type = llvm::Type::getInt1Ty(ctx_);
     value_ = llvm::ConstantInt::get(bool_type, static_cast<long unsigned int>(value));
+}
+
+void CodeGenerator::visit(FloatNode &val) {
+    double value = val.get_value();
+    auto float_type = llvm::Type::getFloatTy(ctx_);
+    value_ = llvm::ConstantFP::get(float_type,value);
 }
 
 void CodeGenerator::visit(SelectorNode &)
@@ -824,6 +834,7 @@ void CodeGenerator::visit(ModuleNode &node)
     variables_.beginScope();
     variables_.insert_type("INTEGER",llvm::Type::getInt64Ty(ctx_));
     variables_.insert_type("BOOLEAN",llvm::Type::getInt1Ty(ctx_));
+    variables_.insert_type("REAL",llvm::Type::getFloatTy(ctx_));
 
     // define main
     auto main = module_->getOrInsertFunction("main", builder_->getInt64Ty());
