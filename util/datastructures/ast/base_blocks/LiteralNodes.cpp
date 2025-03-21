@@ -30,3 +30,19 @@ void FloatNode::accept(NodeVisitor &visitor) {
 string FloatNode::to_string() const {
     return std::to_string(value_);
 }
+
+void CharNode::accept(NodeVisitor &visitor) {
+    visitor.visit(*this);
+}
+
+string CharNode::to_string() const {
+    return {'"',char(value_),'"'};
+}
+
+void StringNode::accept(NodeVisitor &visitor) {
+    visitor.visit(*this);
+}
+
+string StringNode::to_string() const {
+    return "\"" + value_+ "\"";
+}

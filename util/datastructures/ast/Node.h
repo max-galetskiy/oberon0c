@@ -28,6 +28,8 @@ enum class NodeType : char {
     integer,
     boolean,
     real,
+    character,
+    string,
     module,
     procedure_call,
     procedure_declaration,

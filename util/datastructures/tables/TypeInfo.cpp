@@ -16,6 +16,8 @@ bool TypeInfo::operator==(TypeInfo other) {
         case BOOLEAN:
         case INTEGER:
         case FLOAT:
+        case CHAR:
+        case STRING:
             return (this->tag == other.tag);
         case ARRAY:
             return(other.tag == ARRAY &&

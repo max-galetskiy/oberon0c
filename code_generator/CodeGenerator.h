@@ -51,6 +51,7 @@ private:
     IRBuilder<> *builder_;
 
     std::unordered_map<string, Function *> procedures_;
+    std::unordered_map<string, llvm::Value*> string_literals_; // String literals are stored as global variables
     LLVMValueTable variables_;
 
     llvm::Value *value_;
@@ -73,6 +74,8 @@ public:
     void visit(IntNode &) override;
     void visit(FloatNode &) override;
     void visit(BoolNode &) override;
+    void visit(CharNode &) override;
+    void visit(StringNode&) override;
     void visit(SelectorNode &) override;
 
     llvm::Type* create_llvm_type(TypeNode&);

@@ -81,6 +81,15 @@ void CodeGenerator::visit(ExpressionNode &node)
     case NodeType::boolean:
         visit(dynamic_cast<BoolNode&>(node));
         break;
+    case NodeType::real:
+        visit(dynamic_cast<FloatNode&>(node));
+        break;
+    case NodeType::character:
+        visit(dynamic_cast<CharNode&>(node));
+        break;
+    case NodeType::string:
+        visit(dynamic_cast<StringNode&>(node));
+        break;
     case NodeType::procedure_call:
         assert(dynamic_cast<ProcedureCallExpressionNode&>(node).get_call());
         visit(*dynamic_cast<ProcedureCallExpressionNode&>(node).get_call());
@@ -325,22 +334,34 @@ void CodeGenerator::LoadIdent(IdentNode &ident, bool return_pointer)
 
 void CodeGenerator::visit(IntNode &val)
 {
-    long int_val = val.get_value();
-    llvm::Type *longType = llvm::Type::getInt64Ty(ctx_);
-    auto *longValue = llvm::ConstantInt::get(longType, static_cast<long unsigned int>(int_val));
-    value_ = longValue;
+    value_ = llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_),val.get_value());
 }
 
 void CodeGenerator::visit(BoolNode &val) {
-    bool value = val.get_value();
-    auto bool_type = llvm::Type::getInt1Ty(ctx_);
-    value_ = llvm::ConstantInt::get(bool_type, static_cast<long unsigned int>(value));
+    value_ = llvm::ConstantInt::get(llvm::Type::getInt1Ty(ctx_),val.get_value());
 }
 
 void CodeGenerator::visit(FloatNode &val) {
-    double value = val.get_value();
-    auto float_type = llvm::Type::getFloatTy(ctx_);
-    value_ = llvm::ConstantFP::get(float_type,value);
+    value_ = llvm::ConstantFP::get(llvm::Type::getFloatTy(ctx_),val.get_value());
+}
+
+void CodeGenerator::visit(CharNode &val) {
+    value_ = llvm::ConstantInt::get(llvm::Type::getInt8Ty(ctx_),val.get_value());
+}
+
+void CodeGenerator::visit(StringNode &val) {
+    auto value = val.get_value();
+
+    if(string_literals_.contains(value)){
+        value_ = string_literals_[value];
+        return;
+    }
+
+    auto arr_type = ArrayType::get(llvm::Type::getInt8Ty(ctx_),value.size() + 1);                           // + 1 because of 0-terminator
+    auto arr_init = ConstantDataArray::getRaw(value,value.size() + 1, llvm::Type::getInt8Ty(ctx_));
+    string_literals_[value] = new GlobalVariable(*module_,arr_type,true,GlobalValue::InternalLinkage,arr_init, value + "_LITERAL");
+    value_ = string_literals_[value];
+
 }
 
 void CodeGenerator::visit(SelectorNode &)
@@ -397,6 +418,12 @@ void CodeGenerator::create_declarations(DeclarationsNode &node, bool is_global)
             auto ident = *ident_itr;
             auto type = ident->get_actual_type();
             auto llvm_type = variables_.lookup_type(type->name);
+
+            // If the type of the variable has never been registered as a name, we create it on the fly
+            if(!llvm_type){
+                llvm_type = create_llvm_type(*it->second);
+            }
+
             std::string name = ident->get_value();
 
             llvm::Value *var;
@@ -835,6 +862,8 @@ void CodeGenerator::visit(ModuleNode &node)
     variables_.insert_type("INTEGER",llvm::Type::getInt64Ty(ctx_));
     variables_.insert_type("BOOLEAN",llvm::Type::getInt1Ty(ctx_));
     variables_.insert_type("REAL",llvm::Type::getFloatTy(ctx_));
+    variables_.insert_type("CHAR",llvm::Type::getInt8Ty(ctx_));
+    variables_.insert_type("STRING",llvm::Type::getInt8Ty(ctx_)->getPointerTo());
 
     // define main
     auto main = module_->getOrInsertFunction("main", builder_->getInt64Ty());

@@ -42,6 +42,8 @@ public:
     virtual void visit(IntNode&) = 0;
     virtual void visit(BoolNode&) = 0;
     virtual void visit(FloatNode&) = 0;
+    virtual void visit(CharNode&) = 0;
+    virtual void visit(StringNode&) = 0;
     virtual void visit(SelectorNode&) = 0;
 
     virtual void visit(TypeNode&) = 0;

@@ -122,15 +122,25 @@ std::unique_ptr<IntNode> Parser::integer()
     return std::make_unique<IntNode>(token->start(), int_value);
 }
 
-// real/float (already recognized by the scanner in ful
-std::unique_ptr<FloatNode> Parser::real() {
-    auto token = this->expect(TokenType::float_literal);
-    if(!token){
-        return nullptr;
-    }
+// char (already recognized by the scanner in full)
+std::unique_ptr<CharNode> Parser::character() {
+    auto token = scanner_.next();
+    auto char_value = dynamic_cast<const CharLiteralToken*>(token.get())->value();
+    return std::make_unique<CharNode>(token->start(),char_value);
+}
 
+// real/float (already recognized by the scanner in full)
+std::unique_ptr<FloatNode> Parser::real() {
+    auto token = scanner_.next();
     double float_value = dynamic_cast<const FloatLiteralToken *>(token.get())->value();
     return std::make_unique<FloatNode>(token->start(),float_value);
+}
+
+// string (recognized by scanner in full)
+std::unique_ptr<StringNode> Parser::string() {
+    auto token = scanner_.next();
+    auto val = dynamic_cast<const StringLiteralToken*>(token.get())->value();
+    return std::make_unique<StringNode>(token->start(),val);
 }
 
 // selector -> ("." ident | "[" expression "]" )*
@@ -171,7 +181,7 @@ std::unique_ptr<SelectorNode> Parser::selector()
     return selector;
 }
 
-// factor -> ident selector (ActualParameters)? | number | real | "TRUE" | "FALSE" | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
+// factor -> ident selector (ActualParameters)? | number | real | "TRUE" | "FALSE" | char | string | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
 std::unique_ptr<ExpressionNode> Parser::factor()
 {
     logger_.debug("Factor");
@@ -214,6 +224,12 @@ std::unique_ptr<ExpressionNode> Parser::factor()
     }
     else if(if_next(TokenType::float_literal)){
         return real();
+    }
+    else if(if_next(TokenType::char_literal)){
+        return character();
+    }
+    else if(if_next(TokenType::string_literal)){
+        return string();
     }
     else {
         return integer();

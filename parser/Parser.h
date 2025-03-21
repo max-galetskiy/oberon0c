@@ -51,6 +51,8 @@ private:
     std::unique_ptr<IdentNode> ident();
     std::unique_ptr<IntNode> integer();
     std::unique_ptr<FloatNode> real();
+    std::unique_ptr<CharNode> character();
+    std::unique_ptr<StringNode> string();
     std::unique_ptr<SelectorNode> selector();
     std::unique_ptr<ExpressionNode> factor();
     std::unique_ptr<ExpressionNode> term();

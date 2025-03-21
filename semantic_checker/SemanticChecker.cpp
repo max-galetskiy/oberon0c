@@ -139,7 +139,6 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
             return boolean_type;
         }
     }
-
     else if (type == NodeType::unary_expression)
     {
 
@@ -212,6 +211,14 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
     else if(type == NodeType::real){
         expr.set_types(float_type,float_type);
         return float_type;
+    }
+    else if(type == NodeType::character){
+        expr.set_types(char_type,char_type);
+        return char_type;
+    }
+    else if(type == NodeType::string){
+        expr.set_types(string_type,string_type);
+        return string_type;
     }
     else
     {
@@ -346,7 +353,13 @@ std::optional<long> SemanticChecker::evaluate_expression(ExpressionNode &expr, b
     else if (type == NodeType::boolean){
         return std::nullopt; // For now, we only evaluate constant expressions of type integer
     }
-    else if(type == NodeType::real){
+    else if(type == NodeType::real) {
+        return std::nullopt;
+    }
+    else if (type == NodeType::character){
+        return std::nullopt;
+    }
+    else if(type == NodeType::string){
         return std::nullopt;
     }
 
@@ -485,13 +498,19 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident
 
             if (elem_type->tag == INTEGER)
             {
-                prev_type = scope_table_.lookup_type(int_string);
+                prev_type = integer_type;
             }
             else if(elem_type->tag == BOOLEAN){
-                prev_type = scope_table_.lookup_type(bool_string);
+                prev_type = boolean_type;
             }
             else if(elem_type->tag == FLOAT){
-                prev_type = scope_table_.lookup_type(float_string);
+                prev_type = float_type;
+            }
+            else if(elem_type->tag == CHAR){
+                prev_type = char_type;
+            }
+            else if(elem_type->tag == STRING){
+                prev_type = string_type;
             }
             else if (elem_type->tag == ALIAS)
             {
@@ -546,13 +565,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::create_new_type(TypeNode &type, strin
         const string ident_name = ident_node.get_value();
 
         if(!scope_table_.lookup_type(ident_name)){
-            if(!scope_table_.lookup(ident_name)){
-                logger_.error(type.pos(), "Use of unknown identifier: '" + ident_name + "'.");
-                return error_type;
-            }else{
-                logger_.error(type.pos(), "Identifier '" + ident_name + "' does not refer to a type.");
-                return error_type;
-            }
+            report_unknown_identifier(type.pos(),ident_name,false);
         }
 
         return (insert_into_table) ? scope_table_.insert_type(type_name,ident_name) : scope_table_.lookup_type(ident_name);
@@ -628,6 +641,8 @@ void SemanticChecker::visit(ModuleNode &module)
     scope_table_.insert_type(int_string,INTEGER);
     scope_table_.insert_type(bool_string,BOOLEAN);
     scope_table_.insert_type(float_string,FLOAT);
+    scope_table_.insert_type(char_string,CHAR);
+    scope_table_.insert_type(str_string,STRING);
 
     auto names = module.get_name();
 
@@ -694,10 +709,16 @@ void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
             }
             else
             {
-
                 // Corresponding Type has to be looked up
                 auto type_info = scope_table_.lookup_type(dynamic_cast<IdentNode *>(type)->get_value());
-                var_type = (type_info) ? type_info : error_type;
+
+                if(!type_info){
+                    report_unknown_identifier(procedure.pos(),dynamic_cast<IdentNode *>(type)->get_value(),false);
+                    var_type = error_type;
+                }else{
+                    var_type = type_info;
+                }
+
             }
             visit(*type);
 
@@ -773,7 +794,7 @@ void SemanticChecker::visit(DeclarationsNode &declars)
         // check for double declarations
         if (scope_table_.lookup(itr->first->get_value(), true))
         {
-            if(itr->first->get_value() == int_string || itr->first->get_value() == bool_string){
+            if(itr->first->get_value() == int_string || itr->first->get_value() == bool_string || itr->first->get_value() == float_string || itr->first->get_value() == char_string){
                 logger_.error(declars.pos(), "Attempt to redefine predefined type '" + itr->first->get_value() + "'.");
             }else{
                 logger_.error(declars.pos(), "Multiple Declarations of identifier '" + itr->first->get_value() + "'.");
@@ -1166,6 +1187,8 @@ void SemanticChecker::visit(ProcedureCallNode &node)
 // Left empty, but needed to implement NodeVisitor
 void SemanticChecker::visit(BoolNode &node) {(void)node;}
 void SemanticChecker::visit(FloatNode &node) {(void)node;}
+void SemanticChecker::visit(CharNode &node) { (void)node; }
+void SemanticChecker::visit(StringNode &node) { (void)node; }
 void SemanticChecker::visit(IntNode &node) { (void)node; }
 void SemanticChecker::visit(ExpressionNode &node) { (void)node; }
 void SemanticChecker::visit(UnaryExpressionNode &node) { (void)node; }
@@ -1182,13 +1205,18 @@ void SemanticChecker::validate_program(ModuleNode &node)
     visit(node);
 }
 
-void SemanticChecker::report_unknown_identifier(FilePos pos, string id_name) {
-    if(scope_table_.lookup_type(id_name)){
+void SemanticChecker::report_unknown_identifier(FilePos pos, string id_name, bool variable_wanted) {
+    if(variable_wanted && scope_table_.lookup_type(id_name)){
         logger_.error(pos,"Identifier '" + id_name+ "' refers to a type and not to a variable.");
-    }else{
+    }
+    else if(!variable_wanted && scope_table_.lookup_name(id_name)){
+        logger_.error(pos,"Identifier '" + id_name + "' does not refer to a type.");
+    }
+    else{
         logger_.error(pos, "Use of unknown identifier: '" + id_name + "'.");
     }
 }
+
 
 
 

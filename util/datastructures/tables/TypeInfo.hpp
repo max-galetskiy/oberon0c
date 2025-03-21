@@ -20,6 +20,8 @@ enum TypeTag
     INTEGER,
     BOOLEAN,
     FLOAT,
+    CHAR,
+    STRING,
     ALIAS,
     ERROR_TAG
 };
