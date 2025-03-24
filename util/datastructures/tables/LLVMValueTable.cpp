@@ -1,8 +1,8 @@
 #include "LLVMValueTable.h"
 
-void LLVMValueTable::insert(std::string name, llvm::Value *var, bool is_pointer)
+void LLVMValueTable::insert(std::string name, llvm::Value *var, llvm::Type* type, bool is_pointer)
 {
-    variables_.back()[name] = {var,is_pointer};
+    variables_.back()[name] = {var, type,is_pointer};
 }
 
 void LLVMValueTable::insert_type(std::string name, llvm::Type *type) {

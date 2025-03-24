@@ -18,6 +18,7 @@
 
 enum class NodeType : char {
     array_type,
+    pointer_type,
     assignment,
     declarations,
     unary_expression,
@@ -30,6 +31,7 @@ enum class NodeType : char {
     real,
     character,
     string,
+    nil,
     module,
     procedure_call,
     procedure_declaration,

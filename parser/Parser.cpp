@@ -181,7 +181,7 @@ std::unique_ptr<SelectorNode> Parser::selector()
     return selector;
 }
 
-// factor -> ident selector (ActualParameters)? | number | real | "TRUE" | "FALSE" | char | string | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
+// factor -> ident selector (ActualParameters)? | number | real | "TRUE" | "FALSE" | char | string | "NIL" | "(" expression ")" | "~" factor     // NB: In these types of procedure calls, we do not allow omitting the parentheses
 std::unique_ptr<ExpressionNode> Parser::factor()
 {
     logger_.debug("Factor");
@@ -230,6 +230,10 @@ std::unique_ptr<ExpressionNode> Parser::factor()
     }
     else if(if_next(TokenType::string_literal)){
         return string();
+    }
+    else if(if_next(TokenType::kw_nil)){
+        scanner_.next();
+        return std::make_unique<NilNode>(start);
     }
     else {
         return integer();
@@ -610,7 +614,7 @@ std::unique_ptr<field> Parser::field_list()
     return std::make_unique<field>(std::move(idents), std::move(idents_type));
 }
 
-// Type -> Ident | ArrayType | RecordType
+// Type -> Ident | ArrayType | RecordType | PointerType
 std::unique_ptr<TypeNode> Parser::type()
 {
     logger_.debug("Type");
@@ -626,6 +630,10 @@ std::unique_ptr<TypeNode> Parser::type()
     else if (this->if_next(TokenType::kw_record))
     {
         return record_type();
+    }
+    // PointerType
+    else if(this->if_next(TokenType::kw_pointer)){
+        return pointer_type();
     }
     else
     {
@@ -661,6 +669,15 @@ std::unique_ptr<RecordTypeNode> Parser::record_type()
 
     this->expect(TokenType::kw_end);
     return rec_type; // Success
+}
+
+// PointerType = "POINTER TO" type
+std::unique_ptr<PointerTypeNode> Parser::pointer_type() {
+    logger_.debug("Pointer Type");
+    auto start = scanner_.peek()->start();
+    this->expect(TokenType::kw_pointer);
+    this->expect(TokenType::kw_to);
+    return std::make_unique<PointerTypeNode>(start,type());
 }
 
 // FPSection -> ("VAR")? IdentList ":" type

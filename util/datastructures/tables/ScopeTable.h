@@ -37,6 +37,7 @@ public:
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, const string& aliased_type);
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim);
     std::shared_ptr<TypeInfo> insert_type(const string &type_name,std::map<string, std::shared_ptr<TypeInfo>> fields);
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name, std::shared_ptr<TypeInfo> pointee_type);
 
 };
 

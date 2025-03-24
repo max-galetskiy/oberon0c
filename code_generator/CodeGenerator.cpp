@@ -231,9 +231,9 @@ void CodeGenerator::visit(IdentSelectorExpressionNode &node)
 
 void CodeGenerator::LoadIdentSelector(IdentNode &ident, SelectorNode *selector, bool return_pointer)
 {
-    std::string name = ident.get_value();
-    llvm::Value *var = variables_.lookup(name)->value;
-    TypeInfo *type = ident.get_actual_type().get();
+    auto name = ident.get_value();
+    auto var = variables_.lookup(name)->value;
+    auto type = ident.get_actual_type();
 
     if (!selector || selector->get_selector()->empty())
     {
@@ -264,8 +264,8 @@ void CodeGenerator::LoadIdentSelector(IdentNode &ident, SelectorNode *selector, 
             auto idx = static_cast<uint64_t>(field_index);
 
             llvm::Value *field_index_val = llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), idx);
-            type = record_fields[field_name].get();
-            var = builder_->CreateGEP(variables_.lookup_type(type->name), var, {zero, field_index_val}, "rec_field_" + field_name);
+            type = record_fields[field_name];
+            var = builder_->CreateGEP(lookup_or_create_llvm_type(type), var, {zero, field_index_val}, "rec_field_" + field_name);
 
         }
         else // Array access
@@ -275,11 +275,10 @@ void CodeGenerator::LoadIdentSelector(IdentNode &ident, SelectorNode *selector, 
 
             expr_ptr->accept(*this);
             llvm::Value *index_val = value_;
-            llvm::Type  *arr_type = variables_.lookup_type(type->name);
+            llvm::Type  *arr_type = lookup_or_create_llvm_type(type);
 
             var = builder_->CreateGEP(arr_type, var, {zero, index_val}, "arr_ptr_" + name);
-            type = std::get<ArrayTypeInfo>(type->extended_info.value()).elementType.get();
-
+            type = std::get<ArrayTypeInfo>(type->extended_info.value()).element_type;
 
         }
     }
@@ -290,7 +289,7 @@ void CodeGenerator::LoadIdentSelector(IdentNode &ident, SelectorNode *selector, 
     }
     else
     {
-        llvm::Value *val = builder_->CreateLoad(variables_.lookup_type(type->name), var, "load_" + name);
+        llvm::Value *val = builder_->CreateLoad(lookup_or_create_llvm_type(type), var, "load_" + name);
         value_ = val;
     }
 }
@@ -307,8 +306,8 @@ void CodeGenerator::LoadIdent(IdentNode &ident, bool return_pointer)
     auto ident_info = variables_.lookup(ident.get_value());
 
     llvm::Value *var = ident_info->value;
-    TypeInfo *type = ident.get_actual_type().get();
-    bool is_pointer = ident_info->is_pointer;
+    auto type = ident.get_actual_type();
+    auto is_pointer = ident_info->is_pointer;
 
     if (!var->getType()->isPointerTy() || return_pointer)
     {
@@ -316,7 +315,7 @@ void CodeGenerator::LoadIdent(IdentNode &ident, bool return_pointer)
     }
     else
     {
-        auto llvm_type = variables_.lookup_type(type->name);
+        auto llvm_type = lookup_or_create_llvm_type(type);
 
         if (is_pointer)
         {
@@ -381,7 +380,7 @@ void CodeGenerator::create_declarations(DeclarationsNode &node, bool is_global)
     for (auto it = types.begin(); it != types.end(); ++it)
     {
         auto name = it->first->get_value();
-        variables_.insert_type(name, create_llvm_type(*it->second));
+        variables_.insert_type(name, create_llvm_type(it->second->get_actual_type()));
     }
 
     auto constants = node.get_constants();
@@ -392,7 +391,7 @@ void CodeGenerator::create_declarations(DeclarationsNode &node, bool is_global)
         std::string name = ident->get_value();
 
         auto type = it->first->get_actual_type();
-        auto llvm_type = variables_.lookup_type(type->name);
+        auto llvm_type = lookup_or_create_llvm_type(type);
 
         it->second->accept(*this);
         llvm::Value *value = value_;
@@ -407,7 +406,7 @@ void CodeGenerator::create_declarations(DeclarationsNode &node, bool is_global)
             builder_->CreateStore(value, var);
         }
 
-        variables_.insert(name,var,false);
+        variables_.insert(name,var,llvm_type,false);
     }
 
     auto variables = node.get_variables();
@@ -417,12 +416,7 @@ void CodeGenerator::create_declarations(DeclarationsNode &node, bool is_global)
         {
             auto ident = *ident_itr;
             auto type = ident->get_actual_type();
-            auto llvm_type = variables_.lookup_type(type->name);
-
-            // If the type of the variable has never been registered as a name, we create it on the fly
-            if(!llvm_type){
-                llvm_type = create_llvm_type(*it->second);
-            }
+            auto llvm_type = lookup_or_create_llvm_type(type);
 
             std::string name = ident->get_value();
 
@@ -436,7 +430,7 @@ void CodeGenerator::create_declarations(DeclarationsNode &node, bool is_global)
                 var = builder_->CreateAlloca(llvm_type, nullptr, name);
             }
 
-            variables_.insert(name,var, false);
+            variables_.insert(name,var, llvm_type, false);
         }
     }
 
@@ -450,42 +444,72 @@ void CodeGenerator::create_declarations(DeclarationsNode &node, bool is_global)
 void CodeGenerator::visit(TypeNode &node){(void)node;}
 void CodeGenerator::visit(ArrayTypeNode &node) {(void)node;}
 void CodeGenerator::visit(RecordTypeNode &node){(void)node;}
+void CodeGenerator::visit(PointerTypeNode &node){(void)node;}
+void CodeGenerator::visit(NilNode &node) {(void)node;}
 
-llvm::Type *CodeGenerator::create_llvm_type(TypeNode &node) {
+llvm::Type *CodeGenerator::create_llvm_type(std::shared_ptr<TypeInfo> type) {
 
-    if(node.getNodeType() == NodeType::ident){
-        auto ident_name = dynamic_cast<IdentNode&>(node).get_value();
-        return variables_.lookup_type(ident_name);
+    switch(type->tag){
+        case INTEGER:
+            return variables_.lookup_type("INTEGER");
+        case FLOAT:
+            return variables_.lookup_type("FLOAT");
+        case BOOLEAN:
+            return variables_.lookup_type("BOOLEAN");
+        case CHAR:
+            return variables_.lookup_type("CHAR");
+        case STRING:
+            return variables_.lookup_type("STRING");
+        case ALIAS:
+            return variables_.lookup_type(std::get<AliasTypeInfo>(type->extended_info.value()).aliased_type);
+        case NIL:
+        case ERROR_TAG:
+            return nullptr;
     }
-    else if(node.getNodeType() == NodeType::array_type){
-        auto array_type_node = &dynamic_cast<ArrayTypeNode&>(node);
 
-        auto elem_type = create_llvm_type(*array_type_node->get_type_node());
-        auto dim = array_type_node->get_dim().value();
+    if(type->tag == ARRAY){
+        auto elem_typeinfo = std::get<ArrayTypeInfo>(type->extended_info.value()).element_type;
+        auto elem_type = create_llvm_type(elem_typeinfo);
 
-        return llvm::ArrayType::get(elem_type, static_cast<long unsigned int>(dim));
-
+        auto dim = std::get<ArrayTypeInfo>(type->extended_info.value()).size;
+        return llvm::ArrayType::get(elem_type,dim);
     }
-    else if(node.getNodeType() == NodeType::record_type){
-        auto record_type_node = &dynamic_cast<RecordTypeNode&>(node);
-        auto raw_fields = record_type_node->get_fields();
-        std::vector<llvm::Type *> llvm_fields;
 
-        for(auto field_section: raw_fields){
+    if(type->tag == RECORD){
+        auto field_map = std::get<RecordTypeInfo>(type->extended_info.value()).fields;
 
-            auto field_type_llvm = create_llvm_type(*field_section.second);
-            for(auto field: field_section.first){
-                llvm_fields.push_back(field_type_llvm);
-            }
-
+        std::vector<llvm::Type*> llvm_fields;
+        for(auto elem: field_map){
+            auto field_type_llvm = create_llvm_type(elem.second);  // Here, there is some room for improvement as this function will possibly be called multiple times with the same parameters
+            llvm_fields.push_back(field_type_llvm);
         }
 
-        return llvm::StructType::create(ctx_, llvm_fields);
+        return llvm::StructType::create(ctx_,llvm_fields);
+    }
 
+    if(type->tag == POINTER){
+        auto pointee_type = std::get<PointerTypeInfo>(type->extended_info.value()).pointee_type;
+        auto pointee_llvm = create_llvm_type(pointee_type);
+        return pointee_llvm->getPointerTo();
     }
 
     panic("unreachable (invalid TypeNode type)");
 
+}
+
+llvm::Type *CodeGenerator::lookup_or_create_llvm_type(std::shared_ptr<TypeInfo> type) {
+
+    if(!type->name.empty() && variables_.lookup_type(type->name)){
+        return variables_.lookup_type(type->name);
+    }
+
+    auto llvm_type = create_llvm_type(type);
+
+    if(!llvm_type){
+        panic("LLVM type could not be created from TypeInfo object.");
+    }
+
+    return llvm_type;
 }
 
 void CodeGenerator::visit(ProcedureDeclarationNode &node)
@@ -510,7 +534,7 @@ void CodeGenerator::visit(ProcedureDeclarationNode &node)
             bool is_var = std::get<0>(**itr);
             auto idents = std::get<1>(**itr).get();
             auto typenode = std::get<2>(**itr).get();
-            auto llvm_type = create_llvm_type(*typenode);
+            auto llvm_type = create_llvm_type(typenode->get_actual_type());
 
             if (is_var)
             {
@@ -525,7 +549,7 @@ void CodeGenerator::visit(ProcedureDeclarationNode &node)
     }
 
     if(return_type){
-        llvm_return_type = create_llvm_type(*return_type);
+        llvm_return_type = lookup_or_create_llvm_type(return_type->get_actual_type());
     }
 
     auto signature = FunctionType::get(llvm_return_type, llvm_params, false);
@@ -556,14 +580,14 @@ void CodeGenerator::visit(ProcedureDeclarationNode &node)
                 }
 
                 auto arg_type = param->get()->get_actual_type();
-                auto llvm_type = variables_.lookup_type(arg_type->name);
+                auto llvm_type = lookup_or_create_llvm_type(arg_type);
 
                 // Reserve place for argument on the stack
                 auto param_type = (is_var)? llvm_type->getPointerTo() : llvm_type;
                 auto param_value = builder_->CreateAlloca(param_type, nullptr,param->get()->get_value());
                 builder_->CreateStore(arg_itr,param_value);
 
-                variables_.insert(param->get()->get_value(),param_value,is_var);
+                variables_.insert(param->get()->get_value(),param_value,llvm_type,is_var);
                 arg_itr->setName(param->get()->get_value());
                 arg_itr++;
             }
@@ -617,8 +641,17 @@ void CodeGenerator::visit(AssignmentNode &node)
     auto selector = node.get_selector();
     auto expr = node.get_expr();
 
-    visit(*expr);
+    // Special case: NIL assigned to a pointer type
     auto value = value_;
+    if(expr->getNodeType() == NodeType::nil){
+        auto ident_info = variables_.lookup(ident->get_value());
+        auto pointer_type = ident_info->type;
+        value = llvm::ConstantPointerNull::get(static_cast<llvm::PointerType*>(pointer_type));
+    }
+    else{
+        visit(*expr);
+        value = value_;
+    }
 
     LoadIdentSelector(*ident, selector, true);
     builder_->CreateStore(value, value_);
@@ -950,8 +983,7 @@ void CodeGenerator::emit()
     output.flush();
 }
 
-void CodeGenerator::generate_code(ModuleNode &node)
-{
+void CodeGenerator::generate_code(ModuleNode &node) {
 
     visit(node);
 

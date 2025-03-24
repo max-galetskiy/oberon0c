@@ -79,4 +79,11 @@ class StringNode : public ExpressionNode{
 
 };
 
+class NilNode : public ExpressionNode{
+    public:
+        NilNode(FilePos pos) : ExpressionNode(std::move(pos),NodeType::nil){};
+        void accept(NodeVisitor &visitor) override;
+        [[nodiscard]] string to_string() const override;
+};
+
 #endif //OBERON0C_LITERALNODES_H

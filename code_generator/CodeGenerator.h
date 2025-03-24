@@ -76,12 +76,15 @@ public:
     void visit(BoolNode &) override;
     void visit(CharNode &) override;
     void visit(StringNode&) override;
+    void visit(NilNode&) override;
     void visit(SelectorNode &) override;
 
-    llvm::Type* create_llvm_type(TypeNode&);
+    llvm::Type* create_llvm_type(std::shared_ptr<TypeInfo>);
+    llvm::Type* lookup_or_create_llvm_type(std::shared_ptr<TypeInfo> type);
 
     void visit(TypeNode &) override;
     void visit(ArrayTypeNode &) override;
+    void visit(PointerTypeNode &) override;
     void visit(DeclarationsNode &) override;
     void create_declarations(DeclarationsNode &node, bool is_global = false);
     void visit(ProcedureDeclarationNode &) override;

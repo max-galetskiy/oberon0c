@@ -15,13 +15,12 @@
 #include "util/datastructures/ast/Node.h"
 #include "util/datastructures/tables/TypeInfo.hpp"
 
-// records the "kind" of an identifier, i.e. whether the identifier refers to a variable, a constant, a type or a procedure
+// records the "kind" of an identifier, i.e. whether the identifier refers to a variable, a constant or a procedure
 enum Kind
 {
     PROCEDURE,
     CONSTANT,
     VARIABLE,
-    TYPENAME,
     ERROR_KIND
 };
 
@@ -33,7 +32,6 @@ enum Kind
  *              Procedure   |   ProcedureDeclarationNode
  *              Constant    |   ExpressionNode
  *              Variable    |   TypeNode
- *              Typename    |   TypeNode
  *
  *   --> Type = Type of this variable (nullptr for procedures)
  */
@@ -61,6 +59,7 @@ public:
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, const string &aliased_type);
     std::shared_ptr<TypeInfo> insert_type(const string &type_name, std::shared_ptr<TypeInfo> elementType, int dim);
     std::shared_ptr<TypeInfo> insert_type(const string &type_name,std::map<string, std::shared_ptr<TypeInfo>> fields);
+    std::shared_ptr<TypeInfo> insert_type(const string &type_name, std::shared_ptr<TypeInfo> pointee_type);
 
     IdentInfo *lookup(const std::string &name);
     bool lookup_name(const string& name);

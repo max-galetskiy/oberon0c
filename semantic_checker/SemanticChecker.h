@@ -27,12 +27,14 @@ class SemanticChecker : NodeVisitor {
         inline static const string float_string = "REAL";
         inline static const string char_string = "CHAR";
         inline static const string str_string = "STRING";
+        inline static const string nil_string = "NIL";
         inline static std::shared_ptr<TypeInfo> error_type = std::make_shared<TypeInfo>("<ERROR_TYPE>",ERROR_TAG);
         inline static std::shared_ptr<TypeInfo> boolean_type = std::make_shared<TypeInfo>(bool_string,BOOLEAN);
         inline static std::shared_ptr<TypeInfo> integer_type = std::make_shared<TypeInfo>(int_string,INTEGER);
         inline static std::shared_ptr<TypeInfo> float_type   = std::make_shared<TypeInfo>(float_string, FLOAT);
         inline static std::shared_ptr<TypeInfo> char_type    = std::make_shared<TypeInfo>(char_string,CHAR);
-        inline static std::shared_ptr<TypeInfo> string_type    = std::make_shared<TypeInfo>(str_string,STRING);
+        inline static std::shared_ptr<TypeInfo> string_type  = std::make_shared<TypeInfo>(str_string,STRING);
+        inline static std::shared_ptr<TypeInfo> nil_type     = std::make_shared<TypeInfo>(nil_string,NIL);
 
         void report_unknown_identifier(FilePos pos, string id_name, bool variable_wanted = true);
 
@@ -45,6 +47,7 @@ class SemanticChecker : NodeVisitor {
         void visit(FloatNode&) override;
         void visit(CharNode&) override;
         void visit(StringNode&) override;
+        void visit(NilNode&) override;
         void visit(ExpressionNode&) override;
         void visit(UnaryExpressionNode&) override;
         void visit(BinaryExpressionNode&) override;
@@ -54,6 +57,7 @@ class SemanticChecker : NodeVisitor {
         void visit(ArrayTypeNode&) override;
         void visit(IdentNode&) override;
         void visit(RecordTypeNode&) override;
+        void visit(PointerTypeNode&) override;
 
         // Declarations
         void visit(ModuleNode&) override;

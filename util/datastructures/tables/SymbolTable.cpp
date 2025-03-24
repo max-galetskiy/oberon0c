@@ -87,6 +87,13 @@ std::shared_ptr<TypeInfo> SymbolTable::insert_type(const string &type_name,std::
 
 }
 
+// Overload for PointerTypes
+std::shared_ptr<TypeInfo> SymbolTable::insert_type(const string &type_name, std::shared_ptr<TypeInfo> pointee_type){
+    types_[type_name] = std::make_shared<TypeInfo>(type_name,POINTER,PointerTypeInfo(std::move(pointee_type)));
+    return types_[type_name];
+}
+
+
 std::shared_ptr<TypeInfo> SymbolTable::lookup_type(const string &name) {
     if(types_.find(name) != types_.end()){
         return types_[name];

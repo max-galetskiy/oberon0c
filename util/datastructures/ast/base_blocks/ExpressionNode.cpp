@@ -49,6 +49,8 @@ SourceOperator ExpressionNode::token_to_op(TokenType t)
         return SourceOperator::GEQ;
     case TokenType::op_neq:
         return SourceOperator::NEQ;
+    case TokenType::op_is:
+        return SourceOperator::IS;
     default:
         return SourceOperator::NO_OPERATOR;
     }
@@ -89,6 +91,8 @@ string ExpressionNode::print_operator(SourceOperator op)
         return ">";
     case GEQ:
         return ">=";
+    case IS:
+        return "IS";
     case PAREN:
         return "";
     case NO_OPERATOR:
@@ -108,6 +112,7 @@ int ExpressionNode::op_to_precedence(SourceOperator op)
     case LEQ:
     case GT:
     case GEQ:
+    case IS:
         return 0;
     // Precedence of 1 --> Term Operators like +,- (the operator),OR
     case PLUS:

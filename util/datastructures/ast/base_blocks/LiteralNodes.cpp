@@ -46,3 +46,11 @@ void StringNode::accept(NodeVisitor &visitor) {
 string StringNode::to_string() const {
     return "\"" + value_+ "\"";
 }
+
+void NilNode::accept(NodeVisitor &visitor) {
+    visitor.visit(*this);
+}
+
+string NilNode::to_string() const {
+    return "NIL";
+}

@@ -23,6 +23,7 @@
 #include "util/datastructures/ast/declarations/ArrayTypeNode.h"
 #include "util/datastructures/ast/statements/ProcedureCallNode.h"
 #include "util/datastructures/ast/declarations/RecordTypeNode.h"
+#include "util/datastructures/ast/declarations/PointerTypeNode.hpp"
 
 #include "util/datastructures/ast/statements/StatementSequenceNode.h"
 #include "util/datastructures/ast/statements/StatementNode.h"
@@ -77,6 +78,7 @@ private:
     std::unique_ptr<TypeNode> type();
     std::unique_ptr<ArrayTypeNode> array_type();
     std::unique_ptr<RecordTypeNode> record_type();
+    std::unique_ptr<PointerTypeNode> pointer_type();
 
     std::unique_ptr<fp_section_t> fp_section();
     std::unique_ptr<parameters> formal_parameters();

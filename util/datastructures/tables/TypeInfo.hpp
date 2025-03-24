@@ -17,12 +17,14 @@ enum TypeTag
 {
     RECORD,
     ARRAY,
+    POINTER,
     INTEGER,
     BOOLEAN,
     FLOAT,
     CHAR,
     STRING,
     ALIAS,
+    NIL,
     ERROR_TAG
 };
 
@@ -35,15 +37,19 @@ struct AliasTypeInfo{
 
 struct RecordTypeInfo{
     std::map<std::string, std::shared_ptr<TypeInfo>> fields;
-    RecordTypeInfo(std::map<std::string, std::shared_ptr<TypeInfo>>& fields) : fields(fields){};
+    explicit RecordTypeInfo(std::map<std::string, std::shared_ptr<TypeInfo>>& fields) : fields(fields){};
 };
 
 struct ArrayTypeInfo{
-    std::shared_ptr<TypeInfo> elementType;
+    std::shared_ptr<TypeInfo> element_type;
     int size;
 };
 
-typedef std::variant<RecordTypeInfo,ArrayTypeInfo,AliasTypeInfo> ext_info;
+struct PointerTypeInfo{
+    std::shared_ptr<TypeInfo> pointee_type;
+};
+
+typedef std::variant<RecordTypeInfo,ArrayTypeInfo,AliasTypeInfo,PointerTypeInfo> ext_info;
 
 // encapsulates all necessary info on the type of an identifier
 struct TypeInfo {

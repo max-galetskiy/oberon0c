@@ -49,7 +49,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
                 logger_.error(expr.pos(), "Illegal use of comparison operators with array/record types.");
                 return error_type;
             }
-            if (l_type->tag != r_type->tag || l_type->name != r_type->name)
+            if (!l_type || !r_type || *l_type != *r_type)
             {
                 logger_.error(expr.pos(), "LHS and RHS of Boolean expression do not have equal types.");
                 return error_type;
@@ -220,6 +220,9 @@ std::shared_ptr<TypeInfo> SemanticChecker::checkType(ExpressionNode &expr)
         expr.set_types(string_type,string_type);
         return string_type;
     }
+    else if(type == NodeType::nil){
+        return nil_type;
+    }
     else
     {
         logger_.error(expr.pos(), "Invalid or empty expression.");
@@ -362,6 +365,9 @@ std::optional<long> SemanticChecker::evaluate_expression(ExpressionNode &expr, b
     else if(type == NodeType::string){
         return std::nullopt;
     }
+    else if(type == NodeType::nil){
+        return std::nullopt;
+    }
 
     if (!suppress_errors)
     {
@@ -494,7 +500,7 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident
             }
 
             // Update prev_info
-            TypeInfo* elem_type = std::get<ArrayTypeInfo>(arr_type->extended_info.value()).elementType.get();
+            TypeInfo* elem_type = std::get<ArrayTypeInfo>(arr_type->extended_info.value()).element_type.get();
 
             if (elem_type->tag == INTEGER)
             {
@@ -511,6 +517,9 @@ std::shared_ptr<TypeInfo> SemanticChecker::check_selector_chain(IdentNode &ident
             }
             else if(elem_type->tag == STRING){
                 prev_type = string_type;
+            }
+            else if(elem_type->tag == NIL){
+                prev_type = nil_type;
             }
             else if (elem_type->tag == ALIAS)
             {
@@ -626,6 +635,16 @@ std::shared_ptr<TypeInfo> SemanticChecker::create_new_type(TypeNode &type, strin
         return record_type;
     }
 
+    // PointerType:
+    //      --> Specified type must be valid
+    else if(type.getNodeType() == NodeType::pointer_type){
+        auto pointer_type = &dynamic_cast<PointerTypeNode&>(type);
+        auto pointee_typenode = pointer_type->get_pointee_typenode();
+        auto pointee_type = create_new_type(*pointee_typenode,"", false);
+
+        return (insert_into_table)? scope_table_.insert_type(type_name,pointee_type) : std::make_shared<TypeInfo>(type_name,POINTER,PointerTypeInfo(pointee_type));
+    }
+
     panic("Invalid NodeType passed as TypeNode!");
 }
 
@@ -643,6 +662,7 @@ void SemanticChecker::visit(ModuleNode &module)
     scope_table_.insert_type(float_string,FLOAT);
     scope_table_.insert_type(char_string,CHAR);
     scope_table_.insert_type(str_string,STRING);
+    scope_table_.insert_type(nil_string,NIL);
 
     auto names = module.get_name();
 
@@ -683,8 +703,12 @@ void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
     auto prev_procedure = current_procedure_;
     current_procedure_ = names.first->get_value();
 
-    // Check the return_type
-    std::shared_ptr<TypeInfo> return_type = (procedure.get_return_type_node()) ? create_new_type(*procedure.get_return_type_node(),"",false) : nullptr;
+    // Check the return_type and store the information in the according typenode
+    std::shared_ptr<TypeInfo> return_type = nullptr;
+    if(procedure.get_return_type_node()){
+        return_type = create_new_type(*procedure.get_return_type_node(),"",false);
+        procedure.get_return_type_node()->set_types(return_type, trace_type(return_type));
+    }
 
     // Save the procedure name (before opening up a new scope!)
     scope_table_.insert(names.first->get_value(), Kind::PROCEDURE, &procedure, return_type);
@@ -710,17 +734,18 @@ void SemanticChecker::visit(ProcedureDeclarationNode &procedure)
             else
             {
                 // Corresponding Type has to be looked up
-                auto type_info = scope_table_.lookup_type(dynamic_cast<IdentNode *>(type)->get_value());
+                auto type_info = create_new_type(*type,type->to_string(),false);
 
                 if(!type_info){
-                    report_unknown_identifier(procedure.pos(),dynamic_cast<IdentNode *>(type)->get_value(),false);
                     var_type = error_type;
                 }else{
                     var_type = type_info;
                 }
 
             }
-            visit(*type);
+
+            // Store the type information in the typenode
+            type->set_types(var_type, trace_type(var_type));
 
             for (auto var = std::get<1>(**itr)->begin(); var != std::get<1>(**itr)->end(); var++)
             {
@@ -794,7 +819,7 @@ void SemanticChecker::visit(DeclarationsNode &declars)
         // check for double declarations
         if (scope_table_.lookup(itr->first->get_value(), true))
         {
-            if(itr->first->get_value() == int_string || itr->first->get_value() == bool_string || itr->first->get_value() == float_string || itr->first->get_value() == char_string){
+            if(itr->first->get_value() == int_string || itr->first->get_value() == bool_string || itr->first->get_value() == float_string || itr->first->get_value() == char_string || itr->first->get_value() == str_string || itr->first->get_value() == nil_string){
                 logger_.error(declars.pos(), "Attempt to redefine predefined type '" + itr->first->get_value() + "'.");
             }else{
                 logger_.error(declars.pos(), "Multiple Declarations of identifier '" + itr->first->get_value() + "'.");
@@ -967,13 +992,17 @@ void SemanticChecker::visit(AssignmentNode &node)
     auto rhs = node.get_expr();
     auto expr_type = checkType(*rhs);
 
+    // Special case: Pointers can be assigned NIL
+    if(trace_type(lhs_type)->tag == POINTER && expr_type->tag == NIL){
+        return;
+    }
+
     if ((*expr_type != *lhs_type) && expr_type->tag != ERROR_TAG)
     { // We exclude the error case to avoid too many exceptions
         logger_.error(node.pos(), "Cannot assign something of type '" + expr_type->name + "' to a variable of type '" + lhs_type->name + "'.");
         return;
     }
 
-    // If both have a record type, there needs to be more checking done
 }
 
 // If Statements:
@@ -1199,6 +1228,8 @@ void SemanticChecker::visit(TypeNode &node){(void)node;}
 void SemanticChecker::visit(IdentNode &node){(void)node;}
 void SemanticChecker::visit(ArrayTypeNode &node){(void)node;}
 void SemanticChecker::visit(RecordTypeNode &node){(void)node;}
+void SemanticChecker::visit(PointerTypeNode &node){(void)node;}
+void SemanticChecker::visit(NilNode &node){(void)node;}
 
 void SemanticChecker::validate_program(ModuleNode &node)
 {
@@ -1216,9 +1247,3 @@ void SemanticChecker::report_unknown_identifier(FilePos pos, string id_name, boo
         logger_.error(pos, "Use of unknown identifier: '" + id_name + "'.");
     }
 }
-
-
-
-
-
-

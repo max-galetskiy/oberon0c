@@ -16,6 +16,7 @@
 #include "util/datastructures/ast/declarations/DeclarationsNode.h"
 #include "util/datastructures/ast/declarations/ProcedureDeclarationNode.h"
 #include "util/datastructures/ast/declarations/RecordTypeNode.h"
+#include "util/datastructures/ast/declarations/PointerTypeNode.hpp"
 
 #include "util/datastructures/ast/statements/AssignmentNode.h"
 #include "util/datastructures/ast/statements/IfStatementNode.h"
@@ -44,11 +45,13 @@ public:
     virtual void visit(FloatNode&) = 0;
     virtual void visit(CharNode&) = 0;
     virtual void visit(StringNode&) = 0;
+    virtual void visit(NilNode&) = 0;
     virtual void visit(SelectorNode&) = 0;
 
     virtual void visit(TypeNode&) = 0;
     virtual void visit(ArrayTypeNode&) = 0;
     virtual void visit(DeclarationsNode&) = 0;
+    virtual void visit(PointerTypeNode&) = 0;
     virtual void visit(ProcedureDeclarationNode&) = 0;
     virtual void visit(RecordTypeNode&) = 0;
 

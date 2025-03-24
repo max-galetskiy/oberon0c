@@ -9,6 +9,7 @@
 
 struct VariableInfo {
     llvm::Value* value;
+    llvm::Type* type;
     bool is_pointer;
 };
 
@@ -21,7 +22,7 @@ private:
 public:
     LLVMValueTable();
 
-    void insert(std::string, llvm::Value *, bool is_pointer = false);
+    void insert(std::string, llvm::Value *, llvm::Type*, bool is_pointer = false);
     void insert_type(std::string, llvm::Type*);
 
     VariableInfo* lookup(std::string);

@@ -106,6 +106,11 @@ std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::
     return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,std::move(fields));
 }
 
+std::shared_ptr<TypeInfo> ScopeTable::insert_type(const string &type_name, std::shared_ptr<TypeInfo> pointee_type) {
+    assert(current_scope >= 0);
+    return scopes_[static_cast<size_t>(current_scope)]->insert_type(type_name,std::move(pointee_type));
+}
+
 bool ScopeTable::lookup_name(const string &name, bool only_current) {
 
     if(only_current){
